@@ -89,18 +89,37 @@ function makeQuizFactorization() {
         return;
     }
 
+    function formatTerm(coef, variable = '') {
+        if (coef === 0) return '';
+        if (coef > 0) return `+ ${coef}${variable}`;
+        else return `- ${Math.abs(coef)}${variable}`;
+    }
+
+    function formatFactor(num) {
+        if (num >= 0) return `(x + ${num})`;
+        else return `(x - ${Math.abs(num)})`;
+    }
+
     while (count < number) {
-        const a = Math.floor(Math.random() * level_list[level - 1]) + 1;
-        const b = Math.floor(Math.random() * level_list[level - 1]) + 1;
-        const c = Math.floor(Math.random() * level_list[level - 1]) + 1;
-        const d = Math.floor(Math.random() * level_list[level - 1]) + 1;
+        let a = Math.floor(Math.random() * level_list[level - 1]) + 1;
+        let b = Math.floor(Math.random() * level_list[level - 1]) + 1;
 
-        // 展開: (ax + b)(cx + d) = acx^2 + (ad + bc)x + bd
-        const A = a * c;
-        const B = a * d + b * c;
-        const C = b * d;
+        if (Math.random() < 0.5) a = -a;
+        if (Math.random() < 0.5) b = -b;
 
-        output.innerText += `${A}x² + ${B}x + ${C} = (${a}x + ${b})(${c}x + ${d})\n`;
+        const A = a + b;
+        const B = a * b;
+
+        // 1項目（x²）の係数は省略（1なので）
+        // 2項目（x）の係数はフォーマットして＋−を整える
+        // 定数項は符号付きで表示
+        const xTerm = formatTerm(A, 'x').trimStart(); // 先頭の＋は残すか不要なら削る
+        const constTerm = (B >= 0) ? `+ ${B}` : `- ${Math.abs(B)}`;
+
+        // 出力例: x² - 8x + 12 = (x - 6)(x - 2)
+        output.innerText += `x² ${xTerm} ${constTerm} = ${formatFactor(a)}${formatFactor(b)}\n`;
+
         count++;
     }
+
 }
