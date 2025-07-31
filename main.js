@@ -14,7 +14,7 @@ function makeQuizGCD() {
     let count = 0;
     const number = parseInt(document.getElementById("number").value);
     const level = parseInt(document.getElementById("level").value);
-    const level_list = [50,100,1000]
+    const level_list = [50,100,1000,10000]
 
     while(count < number) {
         if (level < 1 || level > level_list.length) {
@@ -55,7 +55,7 @@ function makeQuizPrimeFactorization() {
     let count = 0;
     const number = parseInt(document.getElementById("number").value);
     const level = parseInt(document.getElementById("level").value);
-    const level_list = [50, 100, 1000];
+    const level_list = [50, 100, 1000, 10000];
 
     if (level < 1 || level > level_list.length) {
         output.innerText = "レベルは1〜" + level_list.length + "の範囲で入力してね！";
@@ -82,7 +82,7 @@ function makeQuizFactorization() {
     let count = 0;
     const number = parseInt(document.getElementById("number").value);
     const level = parseInt(document.getElementById("level").value);
-    const level_list = [5, 10, 50]; // 難易度で係数の範囲が変わる
+    const level_list = [5, 10, 50, 250]; // 難易度で係数の範囲が変わる
 
     if (level < 1 || level > level_list.length) {
         output.innerText = "レベルは1〜" + level_list.length + "の範囲で入力してね！";
