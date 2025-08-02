@@ -53,6 +53,15 @@ button:hover {
     align-content: center;
 }
 
+#divisibilityRule {
+    margin-top: 2rem;
+    padding: 1rem;
+    background-color: white;
+    border: 1px solid #005ea2;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
 #outputQuestion, #outputAnswer {
     margin-top: 2rem;
     padding: 1rem;

@@ -6,8 +6,22 @@
     <title>Document</title>
     <script src="main.js"></script>
     <link rel="stylesheet" href="index.css">
+    <script src="https://unpkg.com/docx@8.5.0/build/index.umd.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
 </head>
 <body>
+    <h1>基礎計算問題作成機</h1>
+
+    <div id="divisibilityRule">
+    <h2>倍数判定法</h2><br>
+    <ul>
+        <li>2^nの倍数判定法 ⇒ 下n桁が2^nの倍数</li>
+        <li>3, 9の倍数判定法 ⇒ 各位の和が3,9の倍数</li>
+        <li>5^nの倍数判定法 ⇒ 下n桁が5^nの倍数</li>
+        <li>7, 11, 13の倍数判定法 ⇒ 3桁ずつにわけ、各数字の和が7,11,13の倍数であれば元の数字も7,11,13の倍数</li>
+    </ul>
+    </div>
+
     <label for="number">問題数 (10~9999)</label><input type="text" id="number" name="number" required minlength="2" maxlength="4" size="10" /><br>
     <label for="level">難易度 (1~4) </label><input type="text" id="level" name="level" required minlength="1" maxlength="1" size="10" /><br>
     <button onclick="makeQuizGCD()">最大公約数の問題</button>
@@ -15,9 +29,15 @@
     <button onclick="makeQuizFactorization()">因数分解の問題</button>
 
     <div id="output">
+        <h2>問題</h2>
         <div id="outputQuestion"></div>
+        <h2>解答</h2>
         <div id="outputAnswer"></div>
     </div>
+
+    <button onclick="saveToExcel()">
+        Excelファイルとして保存
+    </button>
 
 </body>
 </html>

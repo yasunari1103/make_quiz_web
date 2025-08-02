@@ -11,8 +11,8 @@ function gcd(a, b) {
 function makeQuizGCD() {
     const outputQuestion = document.getElementById("outputQuestion");
     const outputAnswer = document.getElementById("outputAnswer");
-    outputQuestion.innerHTML = "<h2>問題</h2><br>";
-    outputAnswer.innerHTML = "<h2>答え</h2><br>";
+    outputQuestion.innerHTML = "";
+    outputAnswer.innerHTML = "";
     let count = 0;
     const number = parseInt(document.getElementById("number").value);
     const level = parseInt(document.getElementById("level").value);
@@ -55,8 +55,8 @@ function primeFactorize(n) {
 function makeQuizPrimeFactorization() {
     const outputQuestion = document.getElementById("outputQuestion");
     const outputAnswer = document.getElementById("outputAnswer");
-    outputQuestion.innerHTML = "<h2>問題</h2><br>";
-    outputAnswer.innerHTML = "<h2>答え</h2><br>";
+    outputQuestion.innerHTML = "";
+    outputAnswer.innerHTML = "";
     let count = 0;
     const number = parseInt(document.getElementById("number").value);
     const level = parseInt(document.getElementById("level").value);
@@ -86,8 +86,8 @@ function makeQuizPrimeFactorization() {
 function makeQuizFactorization() {
     const outputQuestion = document.getElementById("outputQuestion");
     const outputAnswer = document.getElementById("outputAnswer");
-    outputQuestion.innerHTML = "<h2>問題</h2><br>";
-    outputAnswer.innerHTML = "<h2>答え</h2><br>";
+    outputQuestion.innerHTML = "";
+    outputAnswer.innerHTML = "";
     let count = 0;
     const number = parseInt(document.getElementById("number").value);
     const level = parseInt(document.getElementById("level").value);
@@ -132,4 +132,51 @@ function makeQuizFactorization() {
         count++;
     }
 
+}
+
+
+async function saveToExcel() {
+  // まずoutputQuestionとoutputAnswerからテキスト取得
+  const QuestionText = document.getElementById('outputQuestion').innerText;
+  const answerText = document.getElementById('outputAnswer').innerText;
+
+  // 問題は改行で分割して配列に
+  const questions = QuestionText.split('\n').filter(line => line.trim() !== '');
+  const answers = answerText.split('\n').filter(line => line.trim() !== '');
+
+  // ここで問題と答えを4列テーブル風に並べたいならこんな感じ
+  // 例： [問題1, "", 問題2, ""] と [答え1, "", 答え2, ""] の2行目
+  // 空白列は回答欄や区切り用に入れる
+
+  const dataQ = [];
+  const dataA = [];
+
+  for (let i = 0; i < questions.length; i += 2) {
+    const rowQ = [];
+    const rowA = [];
+    rowQ[0] = `${i + 1}問目: ${questions[i]}`;    // A列
+    rowA[0] = `${i + 1}問目: ${answers[i]}`;    // A列
+    rowQ[1] = "";         // B列空白
+    rowA[1] = "";         // B列空白
+    if (i + 1 < questions.length) {
+      rowQ[2] = `${i + 2}問目: ${questions[i + 1]}`; // C列
+      rowA[2] = "";       // C列空白
+      rowQ[3] = "";       // D列空白
+      rowA[3] = `${i + 2}問目: ${answers[i + 1]}`; // D列
+
+    }
+    dataQ.push(rowQ);
+    dataA.push(rowA);
+  }
+
+  // SheetJSの読み込みが前提（https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js）
+  const wb = XLSX.utils.book_new();
+  const ws1 = XLSX.utils.aoa_to_sheet(dataQ);
+  const ws2 = XLSX.utils.aoa_to_sheet(dataA);
+
+  XLSX.utils.book_append_sheet(wb, ws1, "Quiz");
+  XLSX.utils.book_append_sheet(wb, ws2, "Answer");
+
+  // ファイル保存
+  XLSX.writeFile(wb, "quiz.xlsx");
 }
