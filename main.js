@@ -66,9 +66,10 @@ function makeQuizPrimeFactorization() {
     while (quizCount < number) {
         let n = Math.floor(Math.random() * level_list[level - 1] * 10) + 2;
         let factorMap = primeFactorize(n);
-        if (factorMap.size > 1 || (factorMap.size === 1 && [...factorMap.values()][0] > 1)) {
-            if (count > 1) {formatted = [...factorMap.entries()].map(([factor, count]) => `${factor}^${count}`).join(" × ");}
-            else {formatted = [...factorMap.entries()].map(([factor, count]) => `${factor}`).join(" × ");}
+        if ((factorMap.size > 1 && [...factorMap.keys()].every(p => p < 1000)) || (factorMap.size === 1 && [...factorMap.values()][0] > 1)) {
+            const [factor, count] = factorMap.entries();
+
+            let formatted = [...factorMap.entries()].map(([factor, count]) => count > 1 ? `${factor}^${count}` : `${factor}`).join(" × ");
             output.innerText += `${n}の素因数分解は${formatted}です\n`;
             quizCount++;
         }
