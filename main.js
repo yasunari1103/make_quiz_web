@@ -9,8 +9,10 @@ function gcd(a, b) {
 }
 
 function makeQuizGCD() {
-    const output = document.getElementById("output");
-    output.innerText = ""; // 初期化
+    const outputQuestion = document.getElementById("outputQuestion");
+    const outputAnswer = document.getElementById("outputAnswer");
+    outputQuestion.innerHTML = "<h2>問題</h2><br>";
+    outputAnswer.innerHTML = "<h2>答え</h2><br>";
     let count = 0;
     const number = parseInt(document.getElementById("number").value);
     const level = parseInt(document.getElementById("level").value);
@@ -18,7 +20,7 @@ function makeQuizGCD() {
 
     while(count < number) {
         if (level < 1 || level > level_list.length) {
-            output.innerText = "レベルは1〜" + level_list.length + "の範囲で入力してね！";
+            outputQuestion.innerHTML = "レベルは1〜" + level_list.length + "の範囲で入力してね！";
             return;
         }
 
@@ -29,7 +31,8 @@ function makeQuizGCD() {
         let result = gcd(a, b);
 
         if (result > level_list[level-1] && a !== result && b !== result) {
-            output.innerText += `${a}と${b}の最大公約数は${result}です\n`;
+            outputQuestion.innerHTML += `${a}と${b}の最大公約数は？<br>`;
+            outputAnswer.innerHTML += `答え：${result}<br>`
             count++;
         }
     }
@@ -50,15 +53,17 @@ function primeFactorize(n) {
 }
 
 function makeQuizPrimeFactorization() {
-    const output = document.getElementById("output");
-    output.innerText = "";
+    const outputQuestion = document.getElementById("outputQuestion");
+    const outputAnswer = document.getElementById("outputAnswer");
+    outputQuestion.innerHTML = "<h2>問題</h2><br>";
+    outputAnswer.innerHTML = "<h2>答え</h2><br>";
     let count = 0;
     const number = parseInt(document.getElementById("number").value);
     const level = parseInt(document.getElementById("level").value);
     const level_list = [50, 100, 1000, 10000];
 
     if (level < 1 || level > level_list.length) {
-        output.innerText = "レベルは1〜" + level_list.length + "の範囲で入力してね！";
+        outputQuestion.innerHTML = "レベルは1〜" + level_list.length + "の範囲で入力してね！";
         return;
     }
 
@@ -70,7 +75,8 @@ function makeQuizPrimeFactorization() {
             const [factor, count] = factorMap.entries();
 
             let formatted = [...factorMap.entries()].map(([factor, count]) => count > 1 ? `${factor}^${count}` : `${factor}`).join(" × ");
-            output.innerText += `${n}の素因数分解は${formatted}です\n`;
+            outputQuestion.innerHTML += `${n}の素因数分解は？<br>`;
+            outputAnswer.innerHTML += `答え：${formatted}<br>`
             quizCount++;
         }
     }
@@ -78,15 +84,17 @@ function makeQuizPrimeFactorization() {
 
 
 function makeQuizFactorization() {
-    const output = document.getElementById("output");
-    output.innerText = "";
+    const outputQuestion = document.getElementById("outputQuestion");
+    const outputAnswer = document.getElementById("outputAnswer");
+    outputQuestion.innerHTML = "<h2>問題</h2><br>";
+    outputAnswer.innerHTML = "<h2>答え</h2><br>";
     let count = 0;
     const number = parseInt(document.getElementById("number").value);
     const level = parseInt(document.getElementById("level").value);
     const level_list = [5, 10, 50, 250]; // 難易度で係数の範囲が変わる
 
     if (level < 1 || level > level_list.length) {
-        output.innerText = "レベルは1〜" + level_list.length + "の範囲で入力してね！";
+        outputQuestion.innerHTML = "レベルは1〜" + level_list.length + "の範囲で入力してね！";
         return;
     }
 
@@ -118,7 +126,8 @@ function makeQuizFactorization() {
         const constTerm = (B >= 0) ? `+ ${B}` : `- ${Math.abs(B)}`;
 
         // 出力例: x² - 8x + 12 = (x - 6)(x - 2)
-        output.innerText += `x² ${xTerm} ${constTerm} = ${formatFactor(a)}${formatFactor(b)}\n`;
+        outputQuestion.innerHTML += `x² ${xTerm} ${constTerm} を因数分解すると？<br>`;
+        outputAnswer.innerHTML += `答え${formatFactor(a)}${formatFactor(b)}<br>`
 
         count++;
     }
