@@ -75,8 +75,24 @@ button:hover {
     white-space: pre-wrap;
 }
 
+#outputAnswer {
+  display: none;
+}
+
 @media (max-width: 768px) {
     #outputQuestion, #outputAnswer {
         width: 100%;
     }
+}
+
+#toggleAnswerBtn {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1000; /* 他の要素の上に表示したいとき */
+  padding: 10px;
+  background-color: #fdd;
+  border: 1px solid #f99;
+  border-radius: 5px;
+  cursor: pointer;
 }

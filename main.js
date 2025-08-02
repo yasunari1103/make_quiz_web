@@ -180,3 +180,14 @@ async function saveToExcel() {
   // ファイル保存
   XLSX.writeFile(wb, "quiz.xlsx");
 }
+
+document.addEventListener("DOMContentLoaded", () => {
+  const btn = document.getElementById("toggleAnswerBtn");
+  const answerBox = document.getElementById("outputAnswer");
+
+  btn.addEventListener("click", () => {
+    const isVisible = answerBox.style.display !== "none";
+    answerBox.style.display = isVisible ? "none" : "block";
+    btn.textContent = isVisible ? "表示" : "隠す";
+  });
+});
