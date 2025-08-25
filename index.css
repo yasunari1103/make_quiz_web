@@ -75,10 +75,6 @@ button:hover {
     white-space: pre-wrap;
 }
 
-#outputAnswer {
-  display: none;
-}
-
 @media (max-width: 768px) {
     #outputQuestion, #outputAnswer {
         width: 100%;
@@ -96,3 +92,4 @@ button:hover {
   border-radius: 5px;
   cursor: pointer;
 }
+
