@@ -16,7 +16,7 @@ function makeQuizGCD() {
     let count = 0;
     const number = parseInt(document.getElementById("number").value);
     const level = parseInt(document.getElementById("level").value);
-    const level_list = [50,100,1000,10000]
+    const level_list = [50,100,1000,10000];
 
     while(count < number) {
         if (level < 1 || level > level_list.length) {
@@ -31,8 +31,8 @@ function makeQuizGCD() {
         let result = gcd(a, b);
 
         if (result > level_list[level-1] && a !== result && b !== result) {
-            outputQuestion.innerHTML += `${a}と${b}の最大公約数は？<br>`;
-            outputAnswer.innerHTML += `答え：${result}<br>`
+            outputQuestion.innerHTML += `gcd (${a}, ${b}) = <br>`;
+            outputAnswer.innerHTML += `${result}<br>`
             count++;
         }
     }
@@ -75,8 +75,8 @@ function makeQuizPrimeFactorization() {
             const [factor, count] = factorMap.entries();
 
             let formatted = [...factorMap.entries()].map(([factor, count]) => count > 1 ? `${factor}^${count}` : `${factor}`).join(" × ");
-            outputQuestion.innerHTML += `${n}の素因数分解は？<br>`;
-            outputAnswer.innerHTML += `答え：${formatted}<br>`
+            outputQuestion.innerHTML += `${n} = <br>`;
+            outputAnswer.innerHTML += `${formatted}<br>`
             quizCount++;
         }
     }
@@ -126,8 +126,8 @@ function makeQuizFactorization() {
         const constTerm = (B >= 0) ? `+ ${B}` : `- ${Math.abs(B)}`;
 
         // 出力例: x² - 8x + 12 = (x - 6)(x - 2)
-        outputQuestion.innerHTML += `x² ${xTerm} ${constTerm} を因数分解すると？<br>`;
-        outputAnswer.innerHTML += `答え${formatFactor(a)}${formatFactor(b)}<br>`
+        outputQuestion.innerHTML += `x² ${xTerm} ${constTerm} = <br>`;
+        outputAnswer.innerHTML += `${formatFactor(a)}${formatFactor(b)}<br>`
 
         count++;
     }
@@ -139,6 +139,13 @@ async function saveToExcel() {
   // まずoutputQuestionとoutputAnswerからテキスト取得
   const QuestionText = document.getElementById('outputQuestion').innerText;
   const answerText = document.getElementById('outputAnswer').innerText;
+  const outputAnswerElem = document.getElementById('outputAnswer');
+  const style = window.getComputedStyle(outputAnswerElem);
+
+  if (style.display === "none") {
+    alert("答えを表示してから実行してください。");
+    return;
+  }
 
   // 問題は改行で分割して配列に
   const questions = QuestionText.split('\n').filter(line => line.trim() !== '');
@@ -151,20 +158,11 @@ async function saveToExcel() {
   const dataQ = [];
   const dataA = [];
 
-  for (let i = 0; i < questions.length; i += 2) {
+  for (let i = 0; i < questions.length; i += 1) {
     const rowQ = [];
     const rowA = [];
-    rowQ[0] = `${i + 1}問目: ${questions[i]}`;    // A列
-    rowA[0] = `${i + 1}問目: ${answers[i]}`;    // A列
-    rowQ[1] = "";         // B列空白
-    rowA[1] = "";         // B列空白
-    if (i + 1 < questions.length) {
-      rowQ[2] = `${i + 2}問目: ${questions[i + 1]}`; // C列
-      rowA[2] = "";       // C列空白
-      rowQ[3] = "";       // D列空白
-      rowA[3] = `${i + 2}問目: ${answers[i + 1]}`; // D列
-
-    }
+    rowQ[0] = `${questions[i]}`;    // A列
+    rowA[0] = `${answers[i]}`;    // D列
     dataQ.push(rowQ);
     dataA.push(rowA);
   }
