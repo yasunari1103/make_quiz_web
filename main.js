@@ -136,7 +136,6 @@ function makeQuizFactorization() {
 
 
 async function saveToExcel() {
-  // まずoutputQuestionとoutputAnswerからテキスト取得
   const QuestionText = document.getElementById('outputQuestion').innerText;
   const answerText = document.getElementById('outputAnswer').innerText;
   const outputAnswerElem = document.getElementById('outputAnswer');
@@ -147,37 +146,45 @@ async function saveToExcel() {
     return;
   }
 
-  // 問題は改行で分割して配列に
   const questions = QuestionText.split('\n').filter(line => line.trim() !== '');
   const answers = answerText.split('\n').filter(line => line.trim() !== '');
 
-  // ここで問題と答えを4列テーブル風に並べたいならこんな感じ
-  // 例： [問題1, "", 問題2, ""] と [答え1, "", 答え2, ""] の2行目
-  // 空白列は回答欄や区切り用に入れる
+  const data = []; // 1シートにまとめて書く用
 
-  const dataQ = [];
-  const dataA = [];
+  // 32問ごとに「問題 → 答え」をブロックで並べる
+  for (let i = 0; i < questions.length; i++) {
+    const blockIndex = Math.floor(i / 32); // 0,1,2...（33問単位でブロック分け）
+    const withinBlockIndex = i % 32;
 
-  for (let i = 0; i < questions.length; i += 1) {
-    const rowQ = [];
-    const rowA = [];
-    rowQ[0] = `${questions[i]}`;    // A列
-    rowA[0] = `${answers[i]}`;    // D列
-    dataQ.push(rowQ);
-    dataA.push(rowA);
+    // もしこのブロックがまだ作られてなければ初期化
+    if (!data[blockIndex]) {
+      data[blockIndex] = [["【問題】"]]; // 問題の見出し
+    }
+
+    // 問題を追加
+    data[blockIndex].push([`${withinBlockIndex + 1}問目: ${questions[i]}`]);
+
+    // 答えブロックは最後にまとめて追加したいから、別で管理
   }
 
-  // SheetJSの読み込みが前提（https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js）
+  // 問題ブロックのあとに答えブロックを追加
+  for (let blockIndex = 0; blockIndex < data.length; blockIndex++) {
+    data[blockIndex].push(["【答え】"]);
+    for (let i = blockIndex * 32; i < Math.min((blockIndex + 1) * 32, answers.length); i++) {
+      data[blockIndex].push([`${(i % 32) + 1}問目: ${answers[i]}`]);
+    }
+  }
+
+  // すべてのブロックを連結して1シートにする
+  const finalData = [].concat(...data); // ブロックごとに空行で区切り
+
+  // Excel生成
   const wb = XLSX.utils.book_new();
-  const ws1 = XLSX.utils.aoa_to_sheet(dataQ);
-  const ws2 = XLSX.utils.aoa_to_sheet(dataA);
-
-  XLSX.utils.book_append_sheet(wb, ws1, "Quiz");
-  XLSX.utils.book_append_sheet(wb, ws2, "Answer");
-
-  // ファイル保存
+  const ws = XLSX.utils.aoa_to_sheet(finalData);
+  XLSX.utils.book_append_sheet(wb, ws, "Quiz+Answer");
   XLSX.writeFile(wb, "quiz.xlsx");
 }
+
 
 document.addEventListener("DOMContentLoaded", () => {
   const btn = document.getElementById("toggleAnswerBtn");
