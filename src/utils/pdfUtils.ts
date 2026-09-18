@@ -60,12 +60,12 @@ export async function exportToPDF(
     isFirstPage = false;
     container.removeChild(qElem);
 
-    // --- 2. 裏面（解答：右揃え）のHTML作成 ---
+    // --- 2. 裏面（解答：左揃え）のHTML作成 ---
     const aElem = document.createElement('div');
     aElem.style.cssText = 'width: 210mm; height: 297mm; padding-left: 15mm; padding-right: 15mm; padding-top: 3mm; background: #fff; color: #000; box-sizing: border-box;';
     aElem.innerHTML = `
       <h2 style="text-align: center; margin-bottom: 10px; color: #000;">解答 (${pageIdx + 1}ページ目)</h2>
-      <div style="display: flex; flex-direction: column; gap: 6px; text-align: right;">
+      <div style="display: flex; flex-direction: column; gap: 6px; text-align: left;">
         ${pageAnswers
           .map(
             (a) =>
