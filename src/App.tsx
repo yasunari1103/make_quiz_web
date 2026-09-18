@@ -95,7 +95,7 @@ export default function App() {
               Excelで保存
             </button>
             <button onClick={() => exportToPDF(questions, answers)}>
-              PDFとして保存（表面:問題 / 裏面:解答）
+              PDFとして保存（問題数は20の倍数にしてください）
             </button>
           </div>
         </>)}
