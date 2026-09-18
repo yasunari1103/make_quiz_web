@@ -1,46 +1,13 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-    <script src="main.js"></script>
-    <link rel="stylesheet" href="index.css">
-    <script src="https://unpkg.com/docx@8.5.0/build/index.umd.js"></script>
-    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
-</head>
-<body>
-    <h1>基礎計算問題作成機</h1>
-
-    <div id="divisibilityRule">
-    <h2>倍数判定法</h2>
-    <ul>
-        <li>2^nの倍数判定法 ⇒ 下n桁が2^nの倍数</li>
-        <li>3, 9の倍数判定法 ⇒ 各位の和が3,9の倍数</li>
-        <li>5^nの倍数判定法 ⇒ 下n桁が5^nの倍数</li>
-        <li>7, 11, 13の倍数判定法 ⇒ 3桁ずつにわけ、各数字の和が7,11,13の倍数であれば元の数字も7,11,13の倍数</li>
-    </ul>
-    </div>
-
-    <label for="number">問題数 (10~9999)</label><input type="text" id="number" name="number" required minlength="2" maxlength="4" size="10" /><br>
-    <label for="level">難易度 (1~4) </label><input type="text" id="level" name="level" required minlength="1" maxlength="1" size="10" /><br>
-    <button onclick="makeQuizGCD()">最大公約数の問題</button>
-    <button onclick="makeQuizPrimeFactorization()">素因数分解の問題</button>
-    <button onclick="makeQuizFactorization()">因数分解の問題</button><br>
-    
-    印刷する場合は32の倍数の問題数にして文字サイズを20ptにすることをお勧めします。
-    <button onclick="saveToExcel()">
-        Excelファイルとして保存
-    </button>
-
-    <button id="toggleAnswerBtn">回答を隠す</button>
-
-    <div id="output">
-        <h2>問題</h2>
-        <div id="outputQuestion"></div>
-        <h2>解答</h2>
-        <div id="outputAnswer"></div>
-    </div>
-
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>make_quiz_web</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
 </html>

@@ -1,0 +1,188 @@
+/* App.css */
+
+/* 全体の基本設定 */
+:root {
+  --bg-color: #0f172a;
+  --card-bg: #1e293b;
+  --accent-color: #38bdf8;
+  --accent-hover: #0284c7;
+  --text-main: #f8fafc;
+  --text-sub: #94a3b8;
+  --border-color: #334155;
+  --danger-color: #f43f5e;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--bg-color);
+  color: var(--text-main);
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 2rem;
+}
+
+/* メインコンテナ */
+#root > div {
+  width: 90%;
+  max-width: 800px;
+  background-color: var(--card-bg);
+  padding: 2.5rem;
+  border-radius: 16px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--border-color);
+  box-sizing: border-box;
+}
+
+/* タイトル */
+h1 {
+  font-size: 2rem;
+  font-weight: 800;
+  text-align: center;
+  margin-bottom: 2rem;
+  background: linear-gradient(135deg, #38bdf8 0%, #818cf8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: -0.025em;
+  line-height: 1.3;        /* 行の高さを少し広げる */
+  padding: 0.2em 0;        /* 上下にクリッピング用の余裕（あそび）を作る */
+}
+
+/* 入力フォーム部分 */
+div > div {
+  margin-bottom: 1.5rem;
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.App > div {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+label {
+  display: inline-block;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-sub);
+  margin-bottom: 0.5rem;
+  width: 180px;
+}
+
+input[type="text"] {
+  background-color: #0f172a;
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  padding: 0.6rem 1rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  outline: none;
+  transition: all 0.2s ease;
+  width: 120px;
+}
+
+input[type="text"]:focus {
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2);
+}
+
+/* ボタン群のレイアウト */
+button {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: #ffffff;
+  font-weight: 600;
+  border: none;
+  padding: 0.75rem 1.25rem;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-right: 0.75rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px -2px rgba(59, 130, 246, 0.4);
+  filter: brightness(1.1);
+}
+
+button:active {
+  transform: translateY(0);
+  background: #f43f5e;
+}
+
+/* エラーメッセージ */
+p[style*="color: red"], p[style*="color: 'red'"] {
+  background-color: rgba(244, 63, 94, 0.1);
+  border-left: 4px solid var(--danger-color);
+  color: #fda4af !important;
+  padding: 0.75rem 1rem;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  margin-bottom: 1.5rem;
+}
+
+/* 出力エリア */
+#output {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--border-color);
+}
+
+@media (min-width: 640px) {
+  #output {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* 問題・解答セクションカード */
+section#outputQuestion,
+section#outputAnswer {
+  background-color: #0f172a;
+  border: 1px solid var(--border-color);
+  padding: 1.5rem;
+  border-radius: 12px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+/* スクロールバーのカスタム */
+section::-webkit-scrollbar {
+  width: 6px;
+}
+section::-webkit-scrollbar-thumb {
+  background-color: var(--border-color);
+  border-radius: 3px;
+}
+
+h2 {
+  font-size: 1.1rem;
+  color: var(--accent-color);
+  margin-top: 0;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+#output p {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 1rem;
+  margin: 0.5rem 0;
+  color: var(--text-main);
+  background-color: rgba(255, 255, 255, 0.03);
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+}
