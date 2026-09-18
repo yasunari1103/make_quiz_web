@@ -8,6 +8,7 @@ import {
 } from './utils/quizUtils';
 import './App.css';
 import { FormattedText } from './components/FormattedText';
+import { exportToPDF } from './utils/pdfUtils';
 
 export default function App() {
   const [number, setNumber] = useState<string>('10');
@@ -76,6 +77,9 @@ export default function App() {
         />
         <br />
       </div>
+            <button className="fixed-btn" onClick={() => setShowAnswer((visible) => !visible)}>
+              {showAnswer ? '解答を隠す' : '解答を表示'}
+            </button>
 
       <div>
         {/* ボタンの onClick で handleGenerate を呼び出す */}
@@ -84,17 +88,18 @@ export default function App() {
         <button onClick={() => handleGenerate('FACTOR')}>因数分解の問題</button>
       </div>
 
-      {questions.length > 0 && (
+      {(questions.length > 0) && showAnswer && (
         <>
           <div>
-            <button onClick={() => setShowAnswer((visible) => !visible)}>
-              {showAnswer ? '解答を隠す' : '解答を表示'}
-            </button>
             <button onClick={() => saveToExcel(questions, answers, showAnswer)}>
               Excelで保存
             </button>
+            <button onClick={() => exportToPDF(questions, answers)}>
+              PDFとして保存（表面:問題 / 裏面:解答）
+            </button>
           </div>
-
+        </>)}
+        {(questions.length > 0) && (<>
           <div id="output">
             <section id="outputQuestion">
               <h2>問題</h2>
@@ -113,6 +118,28 @@ export default function App() {
                 ))}
               </section>
             )}
+          </div>
+          {/* 画面外に配置するPDF用のレイアウト容器（画面上は非表示、またはスタイルで綺麗に配置） */}
+          <div style={{ position: 'absolute', top: '-9999px', left: '-9999px' }}>
+            {/* 表面（問題） */}
+            <div id="pdf-surface-questions" style={{ width: '210mm', minHeight: '297mm', padding: '15mm', background: '#fff', color: '#000' }}>
+              <h1 style={{ textAlign: 'center', color: '#000' }}>問題</h1>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                {questions.map((q, i) => (
+                  <p key={i} style={{ fontSize: '16pt', margin: '8px 0' }}>{i + 1}. <FormattedText text={q} /></p>
+                ))}
+              </div>
+            </div>
+
+            {/* 裏面（解答） */}
+            <div id="pdf-surface-answers" style={{ width: '210mm', minHeight: '297mm', padding: '15mm', background: '#fff', color: '#000' }}>
+              <h1 style={{ textAlign: 'center', color: '#000' }}>解答</h1>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                {answers.map((a, i) => (
+                  <p key={i} style={{ fontSize: '16pt', margin: '8px 0' }}>{i + 1}. <FormattedText text={a} /></p>
+                ))}
+              </div>
+            </div>
           </div>
         </>
       )}

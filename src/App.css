@@ -121,6 +121,13 @@ button:active {
   background: #f43f5e;
 }
 
+.fixed-btn {
+  position: fixed; /* 画面を基準に位置を固定 */
+  top: 20px;       /* 上からの距離 */
+  right: 20px;     /* 右からの距離 */
+  z-index: 9999;   /* 他の要素の下に隠れないよう前面に配置 */
+}
+
 /* エラーメッセージ */
 p[style*="color: red"], p[style*="color: 'red'"] {
   background-color: rgba(244, 63, 94, 0.1);
@@ -132,14 +139,39 @@ p[style*="color: red"], p[style*="color: 'red'"] {
   margin-bottom: 1.5rem;
 }
 
-/* 出力エリア */
+/* 出力エリア: スマホでも常に 2 列の横並びにする */
 #output {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: 1.5rem;
-  margin-top: 2rem;
-  padding-top: 2rem;
+  grid-template-columns: 1fr 1fr; /* 常に横並び (1:1) */
+  gap: 0.75rem;                  /* スマホ用に隙間を少し狭く調整 */
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
   border-top: 1px solid var(--border-color);
+}
+
+/* 問題・解答セクションカード */
+section#outputQuestion,
+section#outputAnswer {
+  background-color: #0f172a;
+  border: 1px solid var(--border-color);
+  padding: 0.75rem;  /* スマホ用に余白を少し縮小 */
+  border-radius: 12px;
+  max-height: 400px;
+  overflow-y: auto;
+  word-break: break-word; /* 長いテキストの横飛び出し（はみ出し）を防止 */
+}
+
+/* 枠内の段落テキスト */
+#output p {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.85rem; /* スマホでも見やすいよう文字サイズを少し調整 */
+  margin: 0.4rem 0;
+  color: var(--text-main);
+  background-color: rgba(255, 255, 255, 0.03);
+  padding: 0.3rem 0.5rem;
+  border-radius: 6px;
+  white-space: nowrap; /* テキストの折り返しを防ぐ（入り切らない場合はスクロール） */
+  overflow-x: auto;
 }
 
 @media (min-width: 640px) {

@@ -1,6 +1,6 @@
 import * as XLSX from 'xlsx';
 
-const levelList = [50, 100, 1000, 10000, 50000];
+const levelList = [50, 300, 1000, 10000, 50000];
 
 export function gcd(a: number, b: number): number {
   while (b) {
@@ -82,7 +82,7 @@ export function makeQuizPrimeFactorization(num: number, level: number) {
     const factors = primeFactorize(n);
 
     if (
-      (factors.length > 1 && factors.every((factor) => factor < 3000))) {
+      (factors.length > 1 && factors.every((factor) => factor < levelList[level - 1] / 2))) {
       const factorCounts = new Map<number, number>();
       for (const factor of factors) {
         factorCounts.set(factor, (factorCounts.get(factor) ?? 0) + 1);
