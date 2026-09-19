@@ -4,6 +4,7 @@ import {
   makeQuizGCD,
   makeQuizPrimeFactorization,
   makeQuizFactorization,
+  makeQuizQuadratic,
   saveToExcel,
 } from './utils/quizUtils';
 import './App.css';
@@ -19,7 +20,7 @@ export default function App() {
   const [errorMessage, setErrorMessage] = useState<string>('');
 
   // 💡 handleGenerate は App の中に書く！
-  const handleGenerate = (type: 'GCD' | 'PRIME' | 'FACTOR') => {
+  const handleGenerate = (type: 'GCD' | 'PRIME' | 'FACTOR' | 'QUADRATIC') => {
     try {
       const num = parseInt(number, 10);
       const lvl = parseInt(level, 10);
@@ -39,6 +40,9 @@ export default function App() {
       }
       else if (type === 'FACTOR') {
         result = makeQuizFactorization(num, lvl);
+      }
+      else if (type === 'QUADRATIC') {
+        result = makeQuizQuadratic(num, lvl);
       }
 
       setQuestions(result.questions);
@@ -86,6 +90,7 @@ export default function App() {
         <button onClick={() => handleGenerate('GCD')}>最大公約数の問題</button>
         <button onClick={() => handleGenerate('PRIME')}>素因数分解の問題</button>
         <button onClick={() => handleGenerate('FACTOR')}>因数分解の問題</button>
+        <button onClick={() => handleGenerate('QUADRATIC')}>解の公式(試験運用中)</button>
       </div>
 
       {(questions.length > 0) && showAnswer && (

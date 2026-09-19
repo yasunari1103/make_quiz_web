@@ -142,6 +142,36 @@ export function makeQuizFactorization(num: number, level: number) {
   return { questions, answers };
 }
 
+export function makeQuizQuadratic(num: number, level: number) {
+  if (level < 1 || level > levelList.length) {
+    throw new Error("レベルは1~5の範囲で指定してください。");
+  }
+  
+  const questions: string[] = [];
+  const answers: string[] = [];
+  let count = 0;
+
+  while (count < num) {
+    const a = (Math.floor(Math.random() * level) + 1) * (Math.random() < 0.5 ? 1 : -1);
+    const b = (Math.floor((Math.random() * levelList[level - 1]) / 5) + 1) * (Math.random() < 0.5 ? 1 : -1);
+    const c = (Math.floor((Math.random() * levelList[level - 1]) / 5) + 1) * (Math.random() < 0.5 ? 1 : -1);
+
+    const discriminant = b*b-4*a*c;
+    if (discriminant < 0 || discriminant ** 0.5 % 1 === 0) continue;
+
+    let A="";if(a===1)A="";if(a===-1)A="-";else if(a>0&&a!==1)A=`${a}`;else if(a<0)A=`${a}`;let B="";if(b===1)B="";if(b===-1)B="-";else if(b>0)B=`+${b}`;else if(b<0)B=`${b}`;let C="";if(c===1)C="";if(c===-1)C="-";else if(c>0)C=`+${c}`;else if(c<0)C=`${c}`;
+
+    const question = `${A}x² ${B}x ${C} = 0`;
+    const answer = `x = (${-b} ± √${discriminant}) / ${2 * a}`;
+
+    questions.push(question);
+    answers.push(answer);
+    count++;
+  }
+
+  return { questions, answers };
+}
+
 export function saveToExcel(questions: string[], answers: string[], isAnswerVisible: boolean) {
   if (!isAnswerVisible) {
     alert("回答を表示してから実行してください。");
