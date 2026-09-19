@@ -11,8 +11,8 @@ import { FormattedText } from './components/FormattedText';
 import { exportToPDF } from './utils/pdfUtils';
 
 export default function App() {
-  const [number, setNumber] = useState<string>('10');
-  const [level, setLevel] = useState<string>('1');
+  const [number, setNumber] = useState<string>('100');
+  const [level, setLevel] = useState<string>('3');
   const [showAnswer, setShowAnswer] = useState<boolean>(true);
   const [questions, setQuestions] = useState<string[]>([]);
   const [answers, setAnswers] = useState<string[]>([]);
@@ -118,28 +118,6 @@ export default function App() {
                 ))}
               </section>
             )}
-          </div>
-          {/* 画面外に配置するPDF用のレイアウト容器（画面上は非表示、またはスタイルで綺麗に配置） */}
-          <div style={{ position: 'absolute', top: '-9999px', left: '-9999px' }}>
-            {/* 表面（問題） */}
-            <div id="pdf-surface-questions" style={{ width: '210mm', minHeight: '297mm', padding: '15mm', background: '#fff', color: '#000' }}>
-              <h1 style={{ textAlign: 'center', color: '#000' }}>問題</h1>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                {questions.map((q, i) => (
-                  <p key={i} style={{ fontSize: '16pt', margin: '8px 0' }}>{i + 1}. <FormattedText text={q} /></p>
-                ))}
-              </div>
-            </div>
-
-            {/* 裏面（解答） */}
-            <div id="pdf-surface-answers" style={{ width: '210mm', minHeight: '297mm', padding: '15mm', background: '#fff', color: '#000' }}>
-              <h1 style={{ textAlign: 'center', color: '#000' }}>解答</h1>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                {answers.map((a, i) => (
-                  <p key={i} style={{ fontSize: '16pt', margin: '8px 0' }}>{i + 1}. <FormattedText text={a} /></p>
-                ))}
-              </div>
-            </div>
           </div>
         </>
       )}

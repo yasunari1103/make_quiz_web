@@ -1,7 +1,6 @@
-import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 
-// 配列を chunkSize(30) ごとに分割するヘルパー関数
+// 配列を chunkSize(20) ごとに分割するヘルパー関数
 function chunkArray<T>(array: T[], chunkSize: number): T[][] {
   const results: T[][] = [];
   for (let i = 0; i < array.length; i += chunkSize) {
@@ -12,7 +11,7 @@ function chunkArray<T>(array: T[], chunkSize: number): T[][] {
 
 export async function exportToPDF(
   questions: string[],
-  answers: string[],
+  answers: string[]
 ) {
   const pdf = new jsPDF('p', 'mm', 'a4');
   const PAGE_SIZE = 20; // 1ページあたりの問題数
@@ -20,72 +19,55 @@ export async function exportToPDF(
   const questionPages = chunkArray(questions, PAGE_SIZE);
   const answerPages = chunkArray(answers, PAGE_SIZE);
 
-  // 一時的に生成するレンダリング用コンテナ
-  const container = document.createElement('div');
-  container.style.position = 'absolute';
-  container.style.top = '-9999px';
-  container.style.left = '-9999px';
-  container.style.width = '210mm';
-  document.body.appendChild(container);
-
   let isFirstPage = true;
 
   for (let pageIdx = 0; pageIdx < questionPages.length; pageIdx++) {
     const pageQuestions = questionPages[pageIdx];
     const pageAnswers = answerPages[pageIdx];
 
-    // --- 1. 表面（問題：左揃え）のHTML作成 ---
-    const qElem = document.createElement('div');
-    qElem.style.cssText = 'width: 210mm; height: 297mm; padding-left: 15mm; padding-right: 15mm; padding-top: 3mm; background: #fff; color: #000; box-sizing: border-box;';
-    qElem.innerHTML = `
-      <h2 style="text-align: center; margin-bottom: 10px; color: #000;">問題 (${pageIdx + 1}ページ目)</h2>
-      <div style="display: flex; flex-direction: column; gap: 6px; text-align: left;">
-        ${pageQuestions
-          .map(
-            (q) =>
-              `<div style="font-size: 13pt; font-family: monospace; border-bottom: 1px dotted #ccc; padding: 0px 0;">
-                ${q}
-              </div>`
-          )
-          .join('')}
-      </div>
-    `;
-    container.appendChild(qElem);
-
-    const canvasQ = await html2canvas(qElem, { scale: 2 });
-    const imgDataQ = canvasQ.toDataURL('image/png');
-
+    // --- 1. 表面（問題：左揃え） ---
     if (!isFirstPage) pdf.addPage();
-    pdf.addImage(imgDataQ, 'PNG', 0, 0, 210, 297);
     isFirstPage = false;
-    container.removeChild(qElem);
 
-    // --- 2. 裏面（解答：左揃え）のHTML作成 ---
-    const aElem = document.createElement('div');
-    aElem.style.cssText = 'width: 210mm; height: 297mm; padding-left: 15mm; padding-right: 15mm; padding-top: 3mm; background: #fff; color: #000; box-sizing: border-box;';
-    aElem.innerHTML = `
-      <h2 style="text-align: center; margin-bottom: 10px; color: #000;">解答 (${pageIdx + 1}ページ目)</h2>
-      <div style="display: flex; flex-direction: column; gap: 6px; text-align: left;">
-        ${pageAnswers
-          .map(
-            (a) =>
-              `<div style="font-size: 13pt; font-family: monospace; border-bottom: 1px dotted #ccc; padding: 0px 0;">
-                ${a}
-              </div>`
-          )
-          .join('')}
-      </div>
-    `;
-    container.appendChild(aElem);
+    // タイトル (h2: margin-bottom 10px 相当)
+    pdf.setFontSize(30);
+    pdf.text(`Questions`, 105, 12, { align: 'center' });
 
-    const canvasA = await html2canvas(aElem, { scale: 2 });
-    const imgDataA = canvasA.toDataURL('image/png');
+    // 問題文 (font-size: 13pt / padding-left: 15mm)
+    pdf.setFontSize(20);
+    let startY = 22;        // 開始Y位置 (mm)
+    const lineHeight = 14; // 20問がA4枠内にきれいに収まる行間
 
+    pageQuestions.forEach((q, i) => {
+      const y = startY + i * lineHeight;
+      pdf.text(q, 15, y, { align: 'left' });
+      
+      // 下線の破線（border-bottom: 1px dotted #ccc 相当）
+      pdf.setDrawColor(204, 204, 204);
+      pdf.setLineDashPattern([1, 1], 0);
+      pdf.line(15, y + 2, 195, y + 2);
+    });
+
+    // --- 2. 裏面（解答：左揃え） ---
     pdf.addPage();
-    pdf.addImage(imgDataA, 'PNG', 0, 0, 210, 297);
-    container.removeChild(aElem);
+
+    // タイトル
+    pdf.setFontSize(30);
+    pdf.text(`Answers`, 105, 12, { align: 'center' });
+
+    // 解答文
+    pdf.setFontSize(20);
+    pageAnswers.forEach((a, i) => {
+      const y = startY + i * lineHeight;
+      pdf.text(a, 15, y, { align: 'left' });
+      
+      // 下線の破線
+      pdf.setDrawColor(204, 204, 204);
+      pdf.setLineDashPattern([1, 1], 0);
+      pdf.line(15, y + 2, 195, y + 2);
+    });
   }
 
-  document.body.removeChild(container);
-  pdf.save('prime-quiz-30.pdf');
+  // ファイル書き出し（ダウンロード）
+  pdf.save('prime-quiz-20.pdf');
 }
