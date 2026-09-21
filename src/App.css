@@ -218,3 +218,22 @@ h2 {
   padding: 0.4rem 0.8rem;
   border-radius: 6px;
 }
+
+/* 2行分数スタイル */
+.fraction {
+  display: inline-flex;
+  flex-direction: column;
+  vertical-align: middle;
+  text-align: center;
+  padding: 0 4px;
+  font-size: 0.9em;
+}
+
+.fraction .numerator {
+  border-bottom: 1.5px solid currentColor; /* 分数線 */
+  padding-bottom: 1px;
+}
+
+.fraction .denominator {
+  padding-top: 1px;
+}

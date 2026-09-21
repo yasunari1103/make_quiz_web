@@ -40,6 +40,91 @@ export function primeFactorize(n: number): number[] {
   return factors;
 }
 
+// ルートの中身 (d) を a√b の形に分解する関数
+function simplifySqrt(d: number): { outside: number; inside: number } {
+  let outside = 1;
+  let inside = d;
+
+  for (let i = 2; i * i <= inside; i++) {
+    while (inside % (i * i) === 0) {
+      outside *= i;
+      inside /= (i * i);
+    }
+  }
+
+  return { outside, inside };
+}
+
+// 解の公式 (-b ± √d) / (2a) を綺麗に計算・整形する関数
+function simplifyQuadraticFormula(a: number, b: number, discriminant: number): string {
+  const denom = 2 * a; // 分母 2a
+  const p = -b;        // 分子の有理数部分 -b
+
+  // d = 0 の場合（重解）
+  if (discriminant === 0) {
+    const common = gcd(Math.abs(p), Math.abs(denom));
+    const finalNum = p / common;
+    const finalDenom = denom / common;
+
+    if (finalDenom === 1) return `x = ${finalNum}`;
+    if (finalDenom === -1) return `x = ${-finalNum}`;
+    return finalDenom < 0 ? `x = ${-finalNum}/${-finalDenom}` : `x = ${finalNum}/${finalDenom}`;
+  }
+
+  // ルートの簡単化
+  const { outside, inside } = simplifySqrt(discriminant);
+
+  // 1. ルートが完全に外れる場合 (d が平方数)
+  if (inside === 1) {
+    const x1Num = p + outside;
+    const x2Num = p - outside;
+
+    const simplifyFraction = (num: number, den: number) => {
+      const g = gcd(Math.abs(num), Math.abs(den));
+      let n = num / g;
+      let d = den / g;
+      if (d < 0) { n = -n; d = -d; }
+      return d === 1 ? `${n}` : `${n}/${d}`;
+    };
+
+    const ans1 = simplifyFraction(x1Num, denom);
+    const ans2 = simplifyFraction(x2Num, denom);
+
+    return ans1 === ans2 ? `x = ${ans1}` : `x = ${ans1}, ${ans2}`;
+  }
+
+  // 2. ルートが残る場合 ( ± outside √ inside )
+  // 分子全体 (-b, outside) と分母 (2a) の 3 つの数の最大公約数で約分する
+  const common = gcd(gcd(Math.abs(p), outside), Math.abs(denom));
+
+  let finalP = p / common;
+  let finalOutside = outside / common;
+  let finalDenom = denom / common;
+
+  // 分母を正の数にする調整
+  if (finalDenom < 0) {
+    finalP = -finalP;
+    finalDenom = -finalDenom;
+  }
+
+  // 分子文字列の組み立て
+  let numStr = "";
+  const rootStr = finalOutside === 1 ? `√${inside}` : `${finalOutside}√${inside}`;
+
+  if (finalP === 0) {
+    numStr = `±${rootStr}`;
+  } else {
+    numStr = `${finalP} ± ${rootStr}`;
+  }
+
+  // 解のフォーマット判定
+  if (finalDenom === 1) {
+    return `x = ${numStr}`;
+  }
+
+  return `x = (${numStr}) / ${finalDenom}`;
+}
+
 // ---- 各設問作成　（配列　{ questions, answers } を返すように） ----
 
 export function makeQuizGCD(num: number, level: number) {
@@ -131,10 +216,11 @@ export function makeQuizFactorization(num: number, level: number) {
     const A = a + b;
     const B = a * b;
 
+    //  要修正  //
     const xTerm = formatTerm(A, "x").trimStart();
-    const constTerm = B > 0 ? `+ ${B}` : `- ${Math.abs(B)}`;
+    const constTerm = B > 0 ? `+${B}` : `-${Math.abs(B)}`;
 
-    questions.push(`x²　${xTerm} ${constTerm} = `);
+    questions.push(`x² ${xTerm}${constTerm} = `);
     answers.push(`${formatFactor(a)}${formatFactor(b)}`);
     count++;
   }
@@ -162,7 +248,7 @@ export function makeQuizQuadratic(num: number, level: number) {
     let A="";if(a===1)A="";if(a===-1)A="-";else if(a>0&&a!==1)A=`${a}`;else if(a<0)A=`${a}`;let B="";if(b===1)B="";if(b===-1)B="-";else if(b>0)B=`+${b}`;else if(b<0)B=`${b}`;let C="";if(c===1)C="";if(c===-1)C="-";else if(c>0)C=`+${c}`;else if(c<0)C=`${c}`;
 
     const question = `${A}x² ${B}x ${C} = 0`;
-    const answer = `x = (${-b} ± √${discriminant}) / ${2 * a}`;
+    const answer = simplifyQuadraticFormula(a, b, discriminant);
 
     questions.push(question);
     answers.push(answer);

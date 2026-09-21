@@ -1,19 +1,37 @@
 import React from 'react';
 
-// "2^3 × 5^2" のような文字列を "2³ × 5²" のように描画するコンポーネント
-export const FormattedText: React.FC<{ text: string }> = ({ text }) => {
-  // `^数字` や `^変数` のパターンにマッチさせて分割
-  const parts = text.split(/(\^\d+)/g);
+interface Props {
+  text: string;
+}
 
-  return (
-    <span>
-      {parts.map((part, index) => {
-        if (part.startsWith('^')) {
-          // ^ を除外して <sup> で囲む
-          return <sup key={index}>{part.slice(1)}</sup>;
-        }
-        return part;
-      })}
-    </span>
-  );
+// 指数 (^数字) を <sup>数字</sup> に変換して描画するヘルパー関数
+const renderPowerText = (str: string) => {
+  const parts = str.split(/(\^\d+)/g);
+  return parts.map((part, index) => {
+    if (part.startsWith('^')) {
+      return <sup key={index}>{part.slice(1)}</sup>;
+    }
+    return part;
+  });
+};
+
+export const FormattedText: React.FC<Props> = ({ text }) => {
+  // 1. "x = (分子) / 分母" の分数パターンにマッチするか判定
+  const fractionMatch = text.match(/^(x\s*=\s*)\((.*?)\)\s*\/\s*(.+)$/);
+
+  if (fractionMatch) {
+    const [, prefix, num, den] = fractionMatch;
+    return (
+      <span style={{ display: 'inline-flex', alignItems: 'center' }}>
+        {renderPowerText(prefix)}
+        <span className="fraction">
+          <span className="numerator">{renderPowerText(num)}</span>
+          <span className="denominator">{renderPowerText(den)}</span>
+        </span>
+      </span>
+    );
+  }
+
+  // 2. 分数ではない場合（素因数分解の指数表記など）
+  return <span>{renderPowerText(text)}</span>;
 };
