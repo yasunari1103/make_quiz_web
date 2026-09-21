@@ -90,7 +90,7 @@ export default function App() {
         <button onClick={() => handleGenerate('GCD')}>最大公約数の問題</button>
         <button onClick={() => handleGenerate('PRIME')}>素因数分解の問題</button>
         <button onClick={() => handleGenerate('FACTOR')}>因数分解の問題</button>
-        <button onClick={() => handleGenerate('QUADRATIC')}>解の公式(試験運用中)</button>
+        <button onClick={() => handleGenerate('QUADRATIC')}>解の公式</button>
       </div>
 
       {(questions.length > 0) && showAnswer && (
