@@ -9,92 +9,116 @@ function chunkArray<T>(array: T[], chunkSize: number): T[][] {
   return results;
 }
 
-// jsPDFで2行分数を描画するヘルパー関数
-function drawFraction(
-  pdf: jsPDF,
-  prefix: string,  // 例: "1. x = "
-  numerator: string,  // 分子 (例: "1 ± √5")
-  denominator: string, // 分母 (例: "2")
-  x: number,
-  y: number
-) {
-  pdf.setFontSize(13);
-
-  // 1. "1. x = " の描画
-  pdf.text(prefix, x, y, { align: 'left' });
-  const prefixWidth = pdf.getTextWidth(prefix);
-  const startX = x + prefixWidth;
-
-  // 分子と分母の幅を計測して長い方に合わせる
-  const numWidth = pdf.getTextWidth(numerator);
-  const denWidth = pdf.getTextWidth(denominator);
-  const fracWidth = Math.max(numWidth, denWidth) + 4; // 左右に余裕を持たせる
-
-  // 2. 分子 (少し上に配置)
-  const numX = startX + (fracWidth - numWidth) / 2;
-  pdf.text(numerator, numX, y - 4);
-
-  // 3. 分数線 (横線)
-  pdf.setLineWidth(0.3);
-  pdf.setLineDashPattern([1,0], 0)
-  pdf.line(startX+2, y-3, startX + fracWidth*1.5, y-3);
-
-  // 4. 分母 (少し下に配置)
-  const denX = startX + (fracWidth - denWidth) / 2;
-  pdf.text(denominator, denX+3, y + 1);
-}
-
-// テキスト内の指数 (例: 2^3) や √ を解析して描画する関数
+/**
+ * テキスト（指数 ^数字 を含む）を描画し、描画した全体の横幅(mm)を返す
+ */
 function drawFormattedText(
   pdf: jsPDF,
   text: string,
   x: number,
   y: number,
   baseFontSize: number = 13
-) {
-  // 1. 文字化け対策: √記号の調整 (標準フォントで化ける場合は √ -> v や √(...) に置換)
-  // ※標準Helveticaを使う場合は文字化け防止のため '√' を '√' が通るフォントにするか 'v' 等に変換
-  let processedText = text.replace(/√/g, '√'); 
+): number {
+  // 標準フォント向け文字化け対策 (√ -> v)
+  const processedText = text.replace(/√/g, 'v');
 
-  // 2. 指数 (^数字) の分割処理
-  // 例: "2^3 × 5^2" -> ["2", "^3", " × ", "5", "^2"]
+  // 指数 (^数字) の分割処理
   const parts = processedText.split(/(\^\d+)/g);
   let currentX = x;
 
   parts.forEach((part) => {
     if (part.startsWith('^')) {
-      // --- 上付き文字 (指数) の描画 ---
-      const expText = part.slice(1); // "^3" -> "3"
-      
-      // 文字サイズを小さくする (例: 13pt -> 9pt)
+      const expText = part.slice(1);
       const smallFontSize = Math.round(baseFontSize * 0.65);
+      
       pdf.setFontSize(smallFontSize);
-
-      // 通常の位置より少し上に配置 (Y座標を -2.5mm 上げる)
       pdf.text(expText, currentX, y - 2.2);
-
-      // X位置を進める
       currentX += pdf.getTextWidth(expText);
     } else {
-      // --- 通常テキストの描画 ---
       pdf.setFontSize(baseFontSize);
       pdf.text(part, currentX, y);
-
-      // X位置を進める
       currentX += pdf.getTextWidth(part);
     }
   });
 
-  // フォントサイズを元に戻しておく
   pdf.setFontSize(baseFontSize);
+  return currentX - x;
 }
 
-export async function exportToPDF(
-  questions: string[],
-  answers: string[]
+/**
+ * 指数対応テキストの横幅をあらかじめ計算する
+ */
+function getFormattedTextWidth(pdf: jsPDF, text: string, baseFontSize: number = 13): number {
+  const processedText = text.replace(/√/g, 'v');
+  const parts = processedText.split(/(\^\d+)/g);
+  let totalWidth = 0;
+
+  parts.forEach((part) => {
+    if (part.startsWith('^')) {
+      const expText = part.slice(1);
+      pdf.setFontSize(Math.round(baseFontSize * 0.65));
+      totalWidth += pdf.getTextWidth(expText);
+    } else {
+      pdf.setFontSize(baseFontSize);
+      totalWidth += pdf.getTextWidth(part);
+    }
+  });
+
+  pdf.setFontSize(baseFontSize);
+  return totalWidth;
+}
+
+/**
+ * 数式（分数・指数対応）を描画するメイン関数
+ */
+function drawMathExpression(
+  pdf: jsPDF,
+  text: string,
+  x: number,
+  y: number,
+  baseFontSize: number = 13
 ) {
+  pdf.setFontSize(baseFontSize);
+
+  // "x = (分子) / 分母" の分数パターン判定
+  const fractionMatch = text.match(/^(.*?)\((.*?)\)\s*\/\s*(.+)$/);
+
+  if (fractionMatch) {
+    const [, prefix, numerator, denominator] = fractionMatch;
+
+    // 1. 接頭辞 ("1. x = ") の描画
+    const prefixWidth = drawFormattedText(pdf, prefix, x, y, baseFontSize);
+    const startX = x + prefixWidth;
+
+    // 2. 分子・分母の幅計算
+    const numWidth = getFormattedTextWidth(pdf, numerator, baseFontSize);
+    const denWidth = getFormattedTextWidth(pdf, denominator, baseFontSize);
+    const fracWidth = Math.max(numWidth, denWidth) + 3;
+
+    // 3. 分子 (上側)
+    const numX = startX + (fracWidth - numWidth) / 2;
+    drawFormattedText(pdf, numerator, numX, y - 3.5, baseFontSize);
+
+    // 4. 分数線
+    pdf.setLineWidth(0.3);
+    pdf.setLineDashPattern([1, 0], 0);
+    pdf.line(startX, y - 1.5, startX + fracWidth, y - 1.5);
+
+    // 5. 分母 (下側)
+    const denX = startX + (fracWidth - denWidth) / 2;
+    drawFormattedText(pdf, denominator, denX, y + 3.5, baseFontSize);
+  } else {
+    // 通常テキスト（指数含む）
+    drawFormattedText(pdf, text, x, y, baseFontSize);
+  }
+}
+
+/**
+ * 高速PDF出力関数（メイン）
+ */
+export async function exportToPDF(questions: string[], answers: string[]) {
   const pdf = new jsPDF('p', 'mm', 'a4');
-  const PAGE_SIZE = 20; // 1ページあたりの問題数
+  const PAGE_SIZE = 20; // 1ページ20問
 
   const questionPages = chunkArray(questions, PAGE_SIZE);
   const answerPages = chunkArray(answers, PAGE_SIZE);
@@ -104,59 +128,48 @@ export async function exportToPDF(
   for (let pageIdx = 0; pageIdx < questionPages.length; pageIdx++) {
     const pageQuestions = questionPages[pageIdx];
     const pageAnswers = answerPages[pageIdx];
+    const startNum = pageIdx * PAGE_SIZE + 1;
 
-    // --- 1. 表面（問題：左揃え） ---
+    // --- 1. 表面 (問題) ---
     if (!isFirstPage) pdf.addPage();
     isFirstPage = false;
 
-    // タイトル (h2: margin-bottom 10px 相当)
-    pdf.setFontSize(30);
+    pdf.setFontSize(16);
     pdf.text(`Questions`, 105, 12, { align: 'center' });
 
-    // 問題文 (font-size: 13pt / padding-left: 15mm)
-    pdf.setFontSize(20);
-    let startY = 22;        // 開始Y位置 (mm)
-    const lineHeight = 14; // 20問がA4枠内にきれいに収まる行間
+    let startY = 24;
+    const lineHeight = 13.0; // 20問用の行間
 
     pageQuestions.forEach((q, i) => {
       const y = startY + i * lineHeight;
-      pdf.text(q, 15, y, { align: 'left' });
-      
-      // 下線の破線（border-bottom: 1px dotted #ccc 相当）
+      const text = `${startNum + i}. ${q}`;
+
+      drawMathExpression(pdf, text, 15, y, 13);
+
+      // 下線（破線）
       pdf.setDrawColor(204, 204, 204);
       pdf.setLineDashPattern([1, 1], 0);
       pdf.line(15, y + 2, 195, y + 2);
     });
 
-    // --- 2. 裏面（解答：左揃え） ---
+    // --- 2. 裏面 (解答) ---
     pdf.addPage();
 
-    // タイトル
-    pdf.setFontSize(30);
+    pdf.setFontSize(16);
     pdf.text(`Answers`, 105, 12, { align: 'center' });
 
-    // 解答文
-    pdf.setFontSize(20);
     pageAnswers.forEach((a, i) => {
       const y = startY + i * lineHeight;
-      // "(分子) / 分母" の形式かを判定
-      const match = a.match(/^x\s*=\s*\((.*?)\)\s*\/\s*(.+)$/);
+      const text = `${startNum + i}. ${a}`;
 
-      if (match) {
-        const [, num, den] = match;
-        drawFraction(pdf, `x = `, num, den, 15, y);
-      } else {
-        // 整数解などの通常描画
-        pdf.text(`${a}`, 15, y, { align: 'left' });
-      }
-      
-      // 下線の破線
+      drawMathExpression(pdf, text, 15, y, 13);
+
+      // 下線（破線）
       pdf.setDrawColor(204, 204, 204);
       pdf.setLineDashPattern([1, 1], 0);
       pdf.line(15, y + 2, 195, y + 2);
     });
   }
 
-  // ファイル書き出し（ダウンロード）
-  pdf.save('prime-quiz-20.pdf');
+  pdf.save('math-quiz.pdf');
 }
