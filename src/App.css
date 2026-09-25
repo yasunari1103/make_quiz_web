@@ -140,13 +140,54 @@ p[style*="color: red"], p[style*="color: 'red'"] {
 }
 
 /* 出力エリア: スマホでも常に 2 列の横並びにする */
-#output {
+#make-quiz-output {
   display: grid;
   grid-template-columns: 1fr 1fr; /* 常に横並び (1:1) */
   gap: 0.75rem;                  /* スマホ用に隙間を少し狭く調整 */
   margin-top: 1.5rem;
   padding-top: 1.5rem;
   border-top: 1px solid var(--border-color);
+}
+
+#battle-output {
+  display: grid;
+  gap: 0.75rem;                  /* スマホ用に隙間を少し狭く調整 */
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.question-item {
+  display: flex;
+  flex-direction: column; /* 👈 これで縦並びになります */
+  align-items: flex-start; /* 左寄せ */
+  gap: 8px; /* 問題文と入力欄の間の隙間 */
+  margin-bottom: 16px;
+  font-size: 18px;
+}
+
+.question-text {
+  font-weight: bold;
+}
+
+.userForm {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.userForm input {
+  padding: 8px 12px;
+  font-size: 16px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  outline: none;
+}
+
+.userForm input:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
 }
 
 /* 問題・解答セクションカード */

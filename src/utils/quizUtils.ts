@@ -220,7 +220,7 @@ export function makeQuizFactorization(num: number, level: number) {
     const xTerm = formatTerm(A, "x").trimStart();
     const constTerm = B > 0 ? `+${B}` : `-${Math.abs(B)}`;
 
-    questions.push(`x² ${xTerm}${constTerm} = `);
+    questions.push(`x² ${xTerm}x ${constTerm} = `);
     answers.push(`${formatFactor(a)}${formatFactor(b)}`);
     count++;
   }
