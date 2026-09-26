@@ -7,10 +7,124 @@ import {
 import '../App.css';
 import { FormattedText } from '../components/FormattedText';
 import { useNavigate } from 'react-router-dom'
+import { MathKeyboard } from '../components/MathKeyboard';
+import { useRef } from 'react'
 
 type QuizType = 'GCD' | 'PRIME' | 'FACTOR' | 'QUADRATIC';
 
 export const BattlePage: React.FC = () => {
+  // アクティブな入力欄（どの問題のどの欄か）
+  const [activeInput, setActiveInput] = useState<{ index: number; field: 'val1' | 'val2' } | null>(null);
+  // キーボード自体の開閉状態
+  const [isKeyboardOpen, setIsKeyboardOpen] = useState<boolean>(true);
+
+  // 入力欄の参照（スクロール & 文字挿入用）
+  const inputRefs = useRef<{ [key: string]: HTMLInputElement | null }>({});
+
+  // 💡 入力欄が選択されたときの処理（画面内に自動スクロール）
+  const handleInputFocus = (index: number, field: 'val1' | 'val2') => {
+    setActiveInput({ index, field });
+    setIsKeyboardOpen(true);
+
+    // キーボードが開いて見えなくならないよう、対象の入力欄を画面中央へ自動スクロール
+    const key = `${index}-${field}`;
+    setTimeout(() => {
+      inputRefs.current[key]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 100);
+  };
+  // 💡  キーボードの高さを保持するステート
+  const [keyboardHeight, setKeyboardHeight] = useState<number>(0);
+  
+  // 💡  キーボードエレメントを参照するための ref
+  const keyboardRef = useRef<HTMLDivElement>(null);
+  // 💡  キーボードの高さをリアルタイム計測する Effect
+  useEffect(() => {
+    if (!keyboardRef.current) return;
+
+    // 高さを取得して更新する関数
+    const updateHeight = () => {
+      if (keyboardRef.current) {
+        setKeyboardHeight(keyboardRef.current.offsetHeight);
+      }
+    };
+
+    // 初期計測
+    updateHeight();
+
+    // ResizeObserver でキーボードのサイズ変化（開閉アニメーション等）をリアルタイム検知
+    const resizeObserver = new ResizeObserver(() => {
+      updateHeight();
+    });
+
+    resizeObserver.observe(keyboardRef.current);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, []);
+
+
+// 1. 文字挿入処理
+  const handleInsert = (char: string) => {
+    if (!activeInput) return;
+    const { index, field } = activeInput;
+    const key = `${index}-${field}`;
+    const inputEl = inputRefs.current[key];
+    const currentVal = userInputs[index]?.[field] || '';
+
+    if (inputEl) {
+      const start = inputEl.selectionStart ?? currentVal.length;
+      const end = inputEl.selectionEnd ?? currentVal.length;
+
+      const newVal = currentVal.substring(0, start) + char + currentVal.substring(end);
+      handleInputChange(index, field, newVal);
+
+      setTimeout(() => {
+        inputEl.focus();
+        inputEl.setSelectionRange(start + char.length, start + char.length);
+      }, 0);
+    } else {
+      handleInputChange(index, field, currentVal + char);
+    }
+  };
+
+  // 2. 1文字削除
+  const handleDelete = () => {
+    if (!activeInput) return;
+    const { index, field } = activeInput;
+    const key = `${index}-${field}`;
+    const inputEl = inputRefs.current[key];
+    const currentVal = userInputs[index]?.[field] || '';
+    if (!currentVal) return;
+
+    if (inputEl) {
+      const start = inputEl.selectionStart ?? currentVal.length;
+      const end = inputEl.selectionEnd ?? currentVal.length;
+
+      if (start === end && start > 0) {
+        const newVal = currentVal.substring(0, start - 1) + currentVal.substring(end);
+        handleInputChange(index, field, newVal);
+        setTimeout(() => {
+          inputEl.focus();
+          inputEl.setSelectionRange(start - 1, start - 1);
+        }, 0);
+      } else if (start !== end) {
+        const newVal = currentVal.substring(0, start) + currentVal.substring(end);
+        handleInputChange(index, field, newVal);
+        setTimeout(() => {
+          inputEl.focus();
+          inputEl.setSelectionRange(start, start);
+        }, 0);
+      }
+    }
+  };
+
+  // 3. 全削除
+  const handleClear = () => {
+    if (!activeInput) return;
+    handleInputChange(activeInput.index, activeInput.field, '');
+  };
+
   const navigate = useNavigate();
   const [number, setNumber] = useState<string>('10');
   const [level, setLevel] = useState<string>('2');
@@ -33,7 +147,7 @@ export const BattlePage: React.FC = () => {
     let timer: ReturnType<typeof setInterval>; // 👈 ここを修正
     if (isTimerRunning) {
       timer = setInterval(() => {
-        // カウントアップ処理など
+        setSeconds((prev) => prev + 1)
       }, 1000);
     }
 
@@ -131,6 +245,29 @@ export const BattlePage: React.FC = () => {
       >
         ⏱️ {formatTime(seconds)}
       </div>
+      {/* 💡 キーボードを手動で開くボタン（閉じた時や画面右下に常駐） */}
+      {!isKeyboardOpen && (
+        <button
+          onClick={() => setIsKeyboardOpen(true)}
+          style={{
+            position: 'fixed',
+            bottom: '20px',
+            right: '20px',
+            backgroundColor: '#3b82f6',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '25px',
+            padding: '12px 20px',
+            fontSize: '16px',
+            fontWeight: 'bold',
+            boxShadow: '0 4px 10px rgba(0,0,0,0.3)',
+            zIndex: 999,
+            cursor: 'pointer',
+          }}
+        >
+          ⌨️ キーボード表示
+        </button>
+      )}
 
       <h1>速度対戦！計算問題</h1>
 
@@ -209,18 +346,24 @@ export const BattlePage: React.FC = () => {
                     /* 1. 素因数分解用：単一の入力欄 */
                     <input
                       type="text"
+                      inputMode='none'
                       placeholder="例: 2^2 * 3"
                       value={userInputs[index]?.val1 || ''}
+                      onFocus={() => handleInputFocus(index, "val1")}
+                      onClick={() => handleInputFocus(index,"val1")}
                       onChange={(e) => handleInputChange(index, 'val1', e.target.value)}
                       style={{ padding: '6px', fontSize: '16px', width: '150px' }}
                     />
                   ) : (
-                    /* 2. GCD / 因数分解 / 2次方程式用：2つの入力欄 */
+                    /* 2. GCD / 因数分解用：2つの入力欄 */
                     <>
                       <input
                         type="text"
+                        inputMode='none'
                         placeholder="解1"
                         value={userInputs[index]?.val1 || ''}
+                        onFocus={() => handleInputFocus(index, "val1")}
+                        onClick={() => handleInputFocus(index,"val1")}
                         onChange={(e) => handleInputChange(index, 'val1', e.target.value)}
                         style={{ padding: '6px', fontSize: '16px', width: '80px' }}
                       />
@@ -229,6 +372,8 @@ export const BattlePage: React.FC = () => {
                         type="text"
                         placeholder="解2"
                         value={userInputs[index]?.val2 || ''}
+                        onFocus={() => handleInputFocus(index, "val2")}
+                        onClick={() => handleInputFocus(index,"val2")}
                         onChange={(e) => handleInputChange(index, 'val2', e.target.value)}
                         style={{ padding: '6px', fontSize: '16px', width: '80px' }}
                       />
@@ -254,8 +399,21 @@ export const BattlePage: React.FC = () => {
               解答を提出して終了
             </button>
           </section>
+          {/* 画面下に常駐する数学用キーボード */}
+          <MathKeyboard
+            isOpen={isKeyboardOpen}
+            onToggle={() => setIsKeyboardOpen((prev) => !prev)}
+            onInsert={handleInsert}
+            onDelete={handleDelete}
+            onClear={handleClear}
+            onHeightChange={setKeyboardHeight}
+          />
         </div>
       )}
+      
+
+    <div style={{ paddingBottom: isKeyboardOpen ? `${keyboardHeight}px` : '0px', position: 'relative' }}></div>
+
     </div>
   );
 };
