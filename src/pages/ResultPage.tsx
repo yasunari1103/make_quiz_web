@@ -10,6 +10,55 @@ interface ResultState {
   timeSeconds: number;
 }
 
+// ユーザーの入力文字列（例: "3 * 2^2" や "2*2*3"）を素数の配列 [2, 2, 3] に変換する
+export const parsePrimeFactors = (input: string): number[] => {
+  if (!input || !input.trim()) return [];
+
+  // 表記揺れを統一（全角×や*、スペース除去）
+  const normalized = input
+    .replace(/×/g, '*')
+    .replace(/\s+/g, '');
+
+  // '*' で分割して各項を処理
+  const terms = normalized.split('*');
+  const factors: number[] = [];
+
+  for (const term of terms) {
+    if (!term) continue;
+
+    if (term.includes('^')) {
+      // 累乗形式 (例: "2^3")
+      const [baseStr, expStr] = term.split('^');
+      const base = parseInt(baseStr, 10);
+      const exp = parseInt(expStr, 10);
+
+      if (!isNaN(base) && !isNaN(exp) && exp > 0) {
+        for (let i = 0; i < exp; i++) {
+          factors.push(base);
+        }
+      }
+    } else {
+      // 単体数字 (例: "2")
+      const num = parseInt(term, 10);
+      if (!isNaN(num)) {
+        factors.push(num);
+      }
+    }
+  }
+
+  // 昇順にソートして並び順を統一（例: [3, 2, 2] -> [2, 2, 3]）
+  return factors.sort((a, b) => a - b);
+};
+
+// 数字の配列同士（例: [2, 2, 3] と [2, 2, 3]）が一致するかチェック
+export const checkAnswerFactors = (arr1: number[], arr2: number[]): boolean => {
+  // 長さが違ったら不一致
+  if (arr1.length !== arr2.length) return false;
+
+  // 要素がすべて一致しているか確認（ソートは parsePrimeFactors 側で済んでいる前提）
+  return arr1.every((val, idx) => val === arr2[idx]);
+};
+
 export const ResultPage: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -44,43 +93,15 @@ export const ResultPage: React.FC = () => {
     return `${input.val1.trim()}, ${input.val2.trim()}`;
   };
 
-  // 単純な正誤判定（ホワイトスペースを無視して比較）
-  // 💡 指定された2パターン（`^` 表記と上付き文字表記）のみを受け入れる正規化関数
-const checkAnswer = (userAnsStr: string, correctAnsStr: string) => {
-    if (!userAnsStr || !correctAnsStr) return false;
-
-    // 💡 HTMLタグ（<sup>3</sup> など）や特殊文字を変換・正規化する処理
-    const normalize = (str: string) =>
-        str
-        // 1. <sup>数字</sup> を '^数字' に置換 (例: <sup>3</sup> -> ^3)
-        .replace(/<sup[^>]*>(.*?)<\/sup>/gi, '^$1')
-        // 2. その他のHTMLタグ（もしあれば）を全て除去
-        .replace(/<[^>]+>/g, '')
-        // 3. 掛け算記号（× や ・）を半角アスタリスク '*' に統一
-        .replace(/[×・]/g, '*')
-        // 4. 小さい上付き文字（³ ²）も '^数字' に統一
-        .replace(/¹/g, '^1')
-        .replace(/²/g, '^2')
-        .replace(/³/g, '^3')
-        .replace(/⁴/g, '^4')
-        .replace(/⁵/g, '^5')
-        .replace(/⁶/g, '^6')
-        .replace(/⁷/g, '^7')
-        .replace(/⁸/g, '^8')
-        .replace(/⁹/g, '^9')
-        .replace(/⁰/g, '^0')
-        // 5. 空白（スペース）を削除
-        .replace(/\s+/g, '');
-
-    // ユーザーの入力値と、タグ除去・正規化した正解データを比較
-    return normalize(userAnsStr) === normalize(correctAnsStr);
-    };
-
   // 正解数のカウント
   let correctCount = 0;
   questions.forEach((_, index) => {
-    const userAns = formatUserAnswer(userInputs[index]);
-    if (checkAnswer(userAns, answers[index])) {
+    const userAnswerStr = formatUserAnswer(userInputs[index]);
+    const userAnswerFactors = parsePrimeFactors(userAnswerStr)
+    const correctAnserFactors = parsePrimeFactors(answers[index]);
+    const isCorrect = checkAnswerFactors(userAnswerFactors, correctAnserFactors);
+
+    if (isCorrect) {
       correctCount++;
     }
   });
@@ -127,8 +148,10 @@ const checkAnswer = (userAnsStr: string, correctAnsStr: string) => {
       <h2>答え合わせ一覧</h2>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
         {questions.map((question, index) => {
-          const userAnswerStr = formatUserAnswer(userInputs[index]);
-          const isCorrect = checkAnswer(userAnswerStr, answers[index]);
+            const userAnswerStr = formatUserAnswer(userInputs[index]);
+            const userAnswerFactors = parsePrimeFactors(userAnswerStr)
+            const correctAnserFactors = parsePrimeFactors(answers[index]);
+            const isCorrect = checkAnswerFactors(userAnswerFactors, correctAnserFactors);
 
           return (
             <div

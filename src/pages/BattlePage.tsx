@@ -11,7 +11,6 @@ import { MathKeyboard } from '../components/MathKeyboard';
 import { useRef } from 'react'
 
 type QuizType = 'GCD' | 'PRIME' | 'FACTOR' | 'QUADRATIC';
-
 export const BattlePage: React.FC = () => {
   // アクティブな入力欄（どの問題のどの欄か）
   const [activeInput, setActiveInput] = useState<{ index: number; field: 'val1' | 'val2' } | null>(null);
@@ -88,37 +87,47 @@ export const BattlePage: React.FC = () => {
     }
   };
 
-  // 2. 1文字削除
-  const handleDelete = () => {
-    if (!activeInput) return;
-    const { index, field } = activeInput;
-    const key = `${index}-${field}`;
-    const inputEl = inputRefs.current[key];
-    const currentVal = userInputs[index]?.[field] || '';
-    if (!currentVal) return;
+// 2. 1文字削除
+const handleDelete = () => {
+  if (!activeInput) return;
+  const { index, field } = activeInput;
+  const key = `${index}-${field}`;
+  const inputEl = inputRefs.current[key];
+  const currentVal = userInputs[index]?.[field] || '';
 
-    if (inputEl) {
-      const start = inputEl.selectionStart ?? currentVal.length;
-      const end = inputEl.selectionEnd ?? currentVal.length;
+  if (!currentVal) return; // 空なら何もしない
 
-      if (start === end && start > 0) {
-        const newVal = currentVal.substring(0, start - 1) + currentVal.substring(end);
-        handleInputChange(index, field, newVal);
-        setTimeout(() => {
-          inputEl.focus();
-          inputEl.setSelectionRange(start - 1, start - 1);
-        }, 0);
-      } else if (start !== end) {
-        const newVal = currentVal.substring(0, start) + currentVal.substring(end);
-        handleInputChange(index, field, newVal);
-        setTimeout(() => {
-          inputEl.focus();
-          inputEl.setSelectionRange(start, start);
-        }, 0);
-      }
-    }
-  };
+  // カーソル位置の取得（フォーカスが外れている場合は末尾扱いにする）
+  const start = inputEl?.selectionStart ?? currentVal.length;
+  const end = inputEl?.selectionEnd ?? currentVal.length;
 
+  let newVal = '';
+  let newCursorPos = 0;
+
+  if (start !== end) {
+    // 💡 範囲選択されている場合は、選択範囲を削除
+    newVal = currentVal.substring(0, start) + currentVal.substring(end);
+    newCursorPos = start;
+  } else if (start > 0) {
+    // 💡 通常の1文字削除（カーソルの左側の文字を1つ消す）
+    newVal = currentVal.substring(0, start - 1) + currentVal.substring(start);
+    newCursorPos = start - 1;
+  } else {
+    // カーソルが一番先頭(0)にある場合は消せる文字がない
+    return;
+  }
+
+  // 値を更新
+  handleInputChange(index, field, newVal);
+
+  // 💡 カーソル位置を元に戻してフォーカスを再セット
+  if (inputEl) {
+    setTimeout(() => {
+      inputEl.focus();
+      inputEl.setSelectionRange(newCursorPos, newCursorPos);
+    }, 0);
+  }
+};
   // 3. 全削除
   const handleClear = () => {
     if (!activeInput) return;
