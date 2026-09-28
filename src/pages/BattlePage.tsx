@@ -324,9 +324,9 @@ const handleDelete = () => {
 
       {/* 問題生成ボタン */}
       <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginBottom: '20px' }}>
-        <button onClick={() => handleGenerate('GCD')}>最大公約数</button>
+        <button onClick={() => handleGenerate('GCD')}>最大公約数(未実装)</button>
         <button onClick={() => handleGenerate('PRIME')}>素因数分解</button>
-        <button onClick={() => handleGenerate('FACTOR')}>因数分解</button>
+        <button onClick={() => handleGenerate('FACTOR')}>因数分解(未実装)</button>
       </div>
 
       {/* 問題・解答フォーム表示エリア */}
