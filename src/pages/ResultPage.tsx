@@ -1,6 +1,7 @@
 import React from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { FormattedText } from '../components/FormattedText';
+import { checkFactorAnswer } from '../utils/factorUtils';
 
 interface ResultState {
   questions: string[];
@@ -86,23 +87,27 @@ export const ResultPage: React.FC = () => {
 
   // ユーザーの入力値を文字列にまとめる関数
   const formatUserAnswer = (input: { val1: string; val2: string }) => {
-    if (currentType === 'PRIME') {
+    if (currentType !== 'FACTOR') {
       return input.val1.trim() || '（無回答）';
     }
     if (!input.val1 && !input.val2) return '（無回答）';
-    return `${input.val1.trim()}, ${input.val2.trim()}`;
+    return `(x${input.val1.trim()})(x${input.val2.trim()})`;
   };
 
   // 正解数のカウント
   let correctCount = 0;
   questions.forEach((_, index) => {
-    const userAnswerStr = formatUserAnswer(userInputs[index]);
-    const userAnswerFactors = parsePrimeFactors(userAnswerStr)
-    const correctAnserFactors = parsePrimeFactors(answers[index]);
-    const isCorrect = checkAnswerFactors(userAnswerFactors, correctAnserFactors);
+    if (currentType !== "FACTOR") {
+      const userAnswerStr = formatUserAnswer(userInputs[index]);
+      const userAnswerFactors = parsePrimeFactors(userAnswerStr)
+      const correctAnserFactors = parsePrimeFactors(answers[index]);
+      const isCorrect = checkAnswerFactors(userAnswerFactors, correctAnserFactors);
 
-    if (isCorrect) {
-      correctCount++;
+      if (isCorrect) {
+        correctCount++;
+      }
+    } else {
+      
     }
   });
 
@@ -148,17 +153,37 @@ export const ResultPage: React.FC = () => {
       <h2>答え合わせ一覧</h2>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
         {questions.map((question, index) => {
-            const userAnswerStr = formatUserAnswer(userInputs[index]);
-            const userAnswerFactors = parsePrimeFactors(userAnswerStr)
-            const correctAnserFactors = parsePrimeFactors(answers[index]);
-            const isCorrect = checkAnswerFactors(userAnswerFactors, correctAnserFactors);
+          let isCorrect = false;
+          const userAnswerStr = formatUserAnswer(userInputs[index]);
+
+          if (currentType !== 'FACTOR') {
+            const userAnswerFactors = parsePrimeFactors(userAnswerStr);
+            const correctAnswerFactors = parsePrimeFactors(answers[index]);
+            isCorrect = checkAnswerFactors(userAnswerFactors, correctAnswerFactors);
+          } else {
+            // 💡 2次方程式など解が2つのモード (x = 3, -2)
+            const userValues = [
+              (userInputs[index]?.val1 || '').trim(),
+              (userInputs[index]?.val2 || '').trim(),
+            ].sort();
+
+            const correctValues = (answers[index] || '')
+              .split(',')
+              .map((s) => s.trim())
+              .sort();
+
+            console.log(userValues,correctValues);
+            isCorrect =
+              userValues.length === correctValues.length &&
+              userValues.every((val, idx) => val === correctValues[idx]);
+          }
 
           return (
             <div
               key={`result-${index}`}
               style={{
                 border: `2px solid ${isCorrect ? '#28a745' : '#dc3545'}`,
-                backgroundColor: isCorrect ? '#00043d' : '#00043d',
+                backgroundColor: '#00043d',
                 borderRadius: '8px',
                 padding: '15px',
               }}
@@ -180,7 +205,7 @@ export const ResultPage: React.FC = () => {
 
               <div style={{ marginTop: '10px', fontSize: '16px' }}>
                 <div>
-                  <strong>あなたの解答:</strong> {userAnswerStr}
+                  <strong>あなたの解答:</strong> {userAnswerStr || '未入力'}
                 </div>
                 {!isCorrect && (
                   <div style={{ color: '#dc3545', marginTop: '4px' }}>

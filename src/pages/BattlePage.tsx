@@ -324,7 +324,7 @@ const handleDelete = () => {
 
       {/* 問題生成ボタン */}
       <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginBottom: '20px' }}>
-        <button onClick={() => handleGenerate('GCD')}>最大公約数(未実装)</button>
+        <button onClick={() => handleGenerate('GCD')}>最大公約数</button>
         <button onClick={() => handleGenerate('PRIME')}>素因数分解</button>
         <button onClick={() => handleGenerate('FACTOR')}>因数分解(未実装)</button>
       </div>
@@ -351,7 +351,7 @@ const handleDelete = () => {
                 </div>
                 {/* 💡 問題タイプに応じた入力フォームの分岐 */}
                 <div className="userForm" style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
-                  {currentType === 'PRIME' ? (
+                  {currentType !== 'FACTOR' ? (
                     /* 1. 素因数分解用：単一の入力欄 */
                     <input
                       type="text"
@@ -365,7 +365,7 @@ const handleDelete = () => {
                     />
                   ) : (
                     /* 2. GCD / 因数分解用：2つの入力欄 */
-                    <>
+                    <>(x
                       <input
                         type="text"
                         inputMode='none'
@@ -376,7 +376,7 @@ const handleDelete = () => {
                         onChange={(e) => handleInputChange(index, 'val1', e.target.value)}
                         style={{ padding: '6px', fontSize: '16px', width: '80px' }}
                       />
-                      <span>,</span>
+                      <span>)(x</span>
                       <input
                         type="text"
                         placeholder="解2"
@@ -385,7 +385,7 @@ const handleDelete = () => {
                         onClick={() => handleInputFocus(index,"val2")}
                         onChange={(e) => handleInputChange(index, 'val2', e.target.value)}
                         style={{ padding: '6px', fontSize: '16px', width: '80px' }}
-                      />
+                      />)
                     </>
                   )}
                 </div>

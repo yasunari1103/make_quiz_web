@@ -137,8 +137,8 @@ export function makeQuizGCD(num: number, level: number) {
   let count = 0;
 
   while (count < num) {
-    let a = Math.floor(Math.random() * levelList[level - 1] * 100);
-    let b = Math.floor(Math.random() * levelList[level - 1] * 100);
+    let a = Math.floor(Math.random() * levelList[level - 1] * 50);
+    let b = Math.floor(Math.random() * levelList[level - 1] * 50);
 
     if (a === 0 || b === 0 || a === b) continue;
     let result = gcd(a,b);
@@ -207,8 +207,8 @@ export function makeQuizFactorization(num: number, level: number) {
   let count = 0;
 
   while (count < num) {
-    let a = Math.floor(Math.random() * levelList[level - 1]) + 1;
-    let b = Math.floor(Math.random() * levelList[level - 1]) + 1;
+    let a = Math.floor((Math.random() * levelList[level - 1])/2) + 1;
+    let b = Math.floor((Math.random() * levelList[level - 1])/2) + 1;
 
     if (Math.random() < 0.5) a = -a;
     if (Math.random() < 0.5) b = -b;
