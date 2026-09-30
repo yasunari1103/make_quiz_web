@@ -106,9 +106,14 @@ export const ResultPage: React.FC = () => {
       if (isCorrect) {
         correctCount++;
       }
-    } else {
-      
-    }
+    } else if (currentType === 'FACTOR') {
+      // 💡 ユーザー入力 "5, -24" と 正解 "(x+5)(x-24)" から数字だけ抜いて比較
+      const userAnswerStr = formatUserAnswer(userInputs[index]);
+      const isCorrect = checkFactorAnswer(userAnswerStr, answers[index]);
+      if (isCorrect) {
+        correctCount++;
+      }
+}
   });
 
   const accuracy = Math.round((correctCount / questions.length) * 100);
@@ -160,24 +165,11 @@ export const ResultPage: React.FC = () => {
             const userAnswerFactors = parsePrimeFactors(userAnswerStr);
             const correctAnswerFactors = parsePrimeFactors(answers[index]);
             isCorrect = checkAnswerFactors(userAnswerFactors, correctAnswerFactors);
-          } else {
-            // 💡 2次方程式など解が2つのモード (x = 3, -2)
-            const userValues = [
-              (userInputs[index]?.val1 || '').trim(),
-              (userInputs[index]?.val2 || '').trim(),
-            ].sort();
-
-            const correctValues = (answers[index] || '')
-              .split(',')
-              .map((s) => s.trim())
-              .sort();
-
-            console.log(userValues,correctValues);
-            isCorrect =
-              userValues.length === correctValues.length &&
-              userValues.every((val, idx) => val === correctValues[idx]);
+          } else if (currentType === 'FACTOR') {
+              // 2. 因数分解モード ((x+5)(x-24) など)
+              // 正解の式から数字だけを取り出してユーザー入力と比較
+              isCorrect = checkFactorAnswer(userAnswerStr, answers[index]);
           }
-
           return (
             <div
               key={`result-${index}`}

@@ -40,7 +40,7 @@ export const MathKeyboard: React.FC<MathKeyboardProps> = ({
     const keys = [
         ['1', '2', '3', '^'],
         ['4', '5', '6', '*'],
-        ['7', '8', '9', '×'],
+        ['7', '8', '9', '-'],
         ['C', '0', '⌫', '完了'],
     ];
 

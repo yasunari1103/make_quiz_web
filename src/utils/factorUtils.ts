@@ -13,27 +13,39 @@ const normalizeFactor = (factor: string): string => {
     .join('');
 };
 
-// 因数分解の正誤判定メイン関数
-export const checkFactorAnswer = (userInput: string, correctAnswer: string): boolean => {
-  if (!userInput || !userInput.trim()) return false;
+// 式（例: "(x+5)(x-24)"）から数字（定数項）だけを抽出してソートする関数
+export const extractNumbersFromFormula = (formula: string): string[] => {
+  if (!formula) return [];
+  formula = formula.replace(/\s/g, "");
 
-  // カッコ (...) の中身を抽出する正規表現
-  const extractFactors = (str: string): string[] => {
-    const matches = str.match(/\([^)]+\)/g);
-    if (!matches) {
-      // カッコがない入力（そのままの文字列）の場合は1つの要素として扱う
-      return [normalizeFactor(str)];
-    }
-    // 各カッコの中身を取り出して正規化し、カッコ全体の順番もソートする
-    return matches
-      .map(m => normalizeFactor(m.slice(1, -1))) // "(x+5)" -> "x+5" -> 正規化
-      .sort(); // カッコ同士の順番（順不同）を揃える
-  };
+  const matches = formula.match(/[+-]?\d+/g) || [];
+  return matches
+    .map((num) => num.replace(/^\+/, ''))
+    .sort((a, b) => Number(a) - Number(b));
+};
 
-  const userFactors = extractFactors(userInput);
-  const correctFactors = extractFactors(correctAnswer);
+// ユーザー入力の数字文字列（例: "5, -24" や "5*24"）から数字を抽出する関数
+export const extractNumbersFromInput = (input: string): string[] => {
+  if (!input) return [];
+  input = input.replace(/\s/g, "");
 
-  if (userFactors.length !== correctFactors.length) return false;
+  // 数字（符号つき）のみ抽出
+  const matches = input.match(/[+-]?\d+/g) || [];
 
-  return userFactors.every((val, idx) => val === correctFactors[idx]);
+  return matches
+    .map((num) => num.replace(/^\+/, ''))
+    .sort((a, b) => Number(a) - Number(b));
+};
+
+// 因数分解の比較関数
+export const checkFactorAnswer = (userInputStr: string, correctAnswerFormula: string): boolean => {
+  const userNums = extractNumbersFromInput(userInputStr);
+  const correctNums = extractNumbersFromFormula(correctAnswerFormula);
+
+  if (userNums.length !== correctNums.length || userNums.length === 0) {
+    return false;
+  }
+
+  // ソートされた配列同士を比較
+  return userNums.every((val, idx) => val === correctNums[idx]);
 };
