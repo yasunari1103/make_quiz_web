@@ -284,7 +284,9 @@ const handleDelete = () => {
 
       <div>
   {/* 問題数選択 */}
-    <div style={{ display: 'flex', flexWrap: 'wrap', width: "50vw", alignItems: 'center' }}>問題数 (10~50)
+  <div>
+    <p style={{ display: 'flex', flexWrap: 'wrap', width: "50vw", alignItems: 'center' }}>問題数 (10~50)</p>
+    <div style={{ display: 'flex', flexWrap: 'wrap', width: "50vw", alignItems: 'center' }}>
       {[10, 20, 30, 40, 50].map((num) => (
         <label key={`num-${num}`} style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
           <input
@@ -299,11 +301,14 @@ const handleDelete = () => {
         </label>
       ))}
     </div>
+  </div>
 
   <br />
 
   {/* 難易度選択 */}
-    <div style={{ display: 'flex', flexWrap: 'wrap', width: "50vw", alignItems: 'center' }}>難易度 (1~5)
+  <div>
+    <p style={{ display: 'flex', flexWrap: 'wrap', width: "50vw", alignItems: 'center' }}>難易度 (1~5)</p>
+    <div style={{ display: 'flex', flexWrap: 'wrap', width: "50vw", alignItems: 'center' }}>
       {[1, 2, 3, 4, 5].map((lvl) => (
         <label key={`lvl-${lvl}`} style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
           <input
@@ -319,6 +324,7 @@ const handleDelete = () => {
       ))}
     </div>
   </div>
+</div>
 
       {/* 問題生成ボタン */}
       <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginBottom: '20px' }}>
