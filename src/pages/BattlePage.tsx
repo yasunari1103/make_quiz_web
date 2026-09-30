@@ -283,44 +283,42 @@ const handleDelete = () => {
       {errorMessage && <p style={{ color: 'red' }}>{errorMessage}</p>}
 
       <div>
-        {/* 問題数選択 */}
-        <div>
-          <p style={{ fontWeight: 'bold', marginBottom: '5px' }}>問題数 (10~50)</p>
-          {[10, 20, 30, 40, 50].map((num) => (
-            <label key={`num-${num}`} style={{ marginRight: '10px' }}>
-              <input
-                type="radio"
-                name="number"
-                value={num}
-                checked={number === String(num)}
-                onChange={(e) => setNumber(e.target.value)}
-              />{' '}
-              {num}
-            </label>
-          ))}
-        </div>
+  {/* 問題数選択 */}
+    <div style={{ display: 'flex', flexWrap: 'wrap', width: "50vw", alignItems: 'center' }}>問題数 (10~50)
+      {[10, 20, 30, 40, 50].map((num) => (
+        <label key={`num-${num}`} style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+          <input
+            type="radio"
+            name="number"
+            value={num}
+            checked={number === String(num)}
+            onChange={(e) => setNumber(e.target.value)}
+            style={{ marginRight: '4px' }}
+          />
+          {num}
+        </label>
+      ))}
+    </div>
 
-        <br />
+  <br />
 
-        {/* 難易度選択 */}
-        <div>
-          <p style={{ fontWeight: 'bold', marginBottom: '5px' }}>難易度 (1~5)</p>
-          {[1, 2, 3, 4, 5].map((lvl) => (
-            <label key={`lvl-${lvl}`} style={{ marginRight: '10px' }}>
-              <input
-                type="radio"
-                name="difficulty"
-                value={lvl}
-                checked={level === String(lvl)}
-                onChange={handleLevelChange}
-              />{' '}
-              {lvl}
-            </label>
-          ))}
-        </div>
-
-        <br />
-      </div>
+  {/* 難易度選択 */}
+    <div style={{ display: 'flex', flexWrap: 'wrap', width: "50vw", alignItems: 'center' }}>難易度 (1~5)
+      {[1, 2, 3, 4, 5].map((lvl) => (
+        <label key={`lvl-${lvl}`} style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+          <input
+            type="radio"
+            name="difficulty"
+            value={lvl}
+            checked={level === String(lvl)}
+            onChange={handleLevelChange}
+            style={{ marginRight: '4px' }}
+          />
+          {lvl}
+        </label>
+      ))}
+    </div>
+  </div>
 
       {/* 問題生成ボタン */}
       <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginBottom: '20px' }}>
