@@ -40,8 +40,8 @@ export const MathKeyboard: React.FC<MathKeyboardProps> = ({
     const keys = [
         ['1', '2', '3', '^'],
         ['4', '5', '6', '*'],
-        ['7', '8', '9', '-'],
-        ['C', '0', '⌫', '完了'],
+        ['7', '8', '9', '+'],
+        ['C', '0', '⌫', '-'],
     ];
 
   return (
@@ -110,11 +110,7 @@ export const MathKeyboard: React.FC<MathKeyboardProps> = ({
                 } else if (key === '⌫') {
                   action = onDelete;
                   bgColor = '#d1d5db'; // グレー
-                } else if (key === '完了') { // 💡 '閉じる' から '完了' に修正！
-                  action = onToggle;
-                  bgColor = '#3b82f6'; // 青系
-                  textColor = '#ffffff';
-                } else if (['^', '*', '×'].includes(key)) {
+                } else if (['^', '*'].includes(key)) {
                   bgColor = '#e0e7ff'; // 薄い青紫
                 }
 
