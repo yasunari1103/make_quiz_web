@@ -137,8 +137,8 @@ export function makeQuizGCD(num: number, level: number) {
   let count = 0;
 
   while (count < num) {
-    let a = Math.floor(Math.random() * levelList[level - 1] * 50);
-    let b = Math.floor(Math.random() * levelList[level - 1] * 50);
+    let a = Math.floor(Math.random() * levelList[level - 1] * 40);
+    let b = Math.floor(Math.random() * levelList[level - 1] * 40);
 
     if (a === 0 || b === 0 || a === b) continue;
     let result = gcd(a,b);

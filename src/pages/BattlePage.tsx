@@ -361,7 +361,7 @@ const handleDelete = () => {
                     <input
                       type="text"
                       inputMode='none'
-                      placeholder="例: 2^2 * 3"
+                      placeholder="例: 2^2*3, 12, ..."
                       value={userInputs[index]?.val1 || ''}
                       onFocus={() => handleInputFocus(index, "val1")}
                       onClick={() => handleInputFocus(index,"val1")}
@@ -384,6 +384,7 @@ const handleDelete = () => {
                       <span>)(x</span>
                       <input
                         type="text"
+                        inputMode='none'
                         placeholder="解2"
                         value={userInputs[index]?.val2 || ''}
                         onFocus={() => handleInputFocus(index, "val2")}
