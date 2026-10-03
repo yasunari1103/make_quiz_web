@@ -7,8 +7,9 @@ interface ResultState {
   questions: string[];
   answers: string[];
   userInputs: { val1: string; val2: string }[];
-  currentType: 'GCD' | 'PRIME' | 'FACTOR' | 'QUADRATIC';
+  currentType: 'GCD' | 'PRIME' | 'FACTOR';
   timeSeconds: number;
+  level: string;
 }
 
 // ユーザーの入力文字列（例: "3 * 2^2" や "2*2*3"）を素数の配列 [2, 2, 3] に変換する
@@ -76,7 +77,7 @@ export const ResultPage: React.FC = () => {
     );
   }
 
-  const { questions, answers, userInputs, currentType, timeSeconds } = state;
+  const { questions, answers, userInputs, currentType, timeSeconds, level } = state;
 
   // 時間のフォーマット (例: 02:05)
   const formatTime = (totalSeconds: number) => {
@@ -121,6 +122,7 @@ export const ResultPage: React.FC = () => {
   return (
     <div style={{ padding: '20px', maxWidth: '800px', margin: '0 auto' }}>
       <h1>🎉 対戦結果</h1>
+      <h2>mode: {currentType}</h2>
 
       {/* スコア・タイム概要 */}
       <div
@@ -134,21 +136,19 @@ export const ResultPage: React.FC = () => {
           boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
         }}
       >
-        <div>
-          <h3>クリアタイム</h3>
-          <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#007bff', margin: 0 }}>
-            ⏱️ {formatTime(timeSeconds)}
+        <div style={{border: "1px solid #3b82f6", margin:"0"}}>
+          <h3 style={{margin:"0"}}>クリアタイム</h3>
+          <p style={{ fontSize: '25px', fontWeight: 'bold', color: '#007bff', margin: 0 }}>{formatTime(timeSeconds)}</p>
+        </div>
+        <div style={{border: "1px solid #3b82f6", margin:"0"}}>
+          <h3 style={{margin:"0"}}>正解数</h3>
+          <p style={{ fontSize: '25px', fontWeight: 'bold', color: '#28a745', margin: 0 }}>
+            {correctCount} / {questions.length}
           </p>
         </div>
-        <div>
-          <h3>正解数</h3>
-          <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#28a745', margin: 0 }}>
-            {correctCount} / {questions.length} 問
-          </p>
-        </div>
-        <div>
-          <h3>正解率</h3>
-          <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#ffc107', margin: 0 }}>
+        <div style={{border: "1px solid #3b82f6", margin:"0"}}>
+          <h3 style={{margin:"0"}}>正解率</h3>
+          <p style={{ fontSize: '25px', fontWeight: 'bold', color: '#ffc107', margin: 0 }}>
             {accuracy}%
           </p>
         </div>
@@ -226,6 +226,21 @@ export const ResultPage: React.FC = () => {
         >
           もう一度対戦する
         </button>
+        {(accuracy === 100) && (
+          <button 
+            onClick={() => navigate("/ranking", {
+              state: {
+                timeSeconds,
+                correctCount,
+                level,
+                currentType,
+                },
+              }
+            )}
+          >
+            rankingに登録
+          </button>
+      )}
       </div>
     </div>
   );

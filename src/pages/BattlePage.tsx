@@ -8,9 +8,9 @@ import '../App.css';
 import { FormattedText } from '../components/FormattedText';
 import { useNavigate } from 'react-router-dom'
 import { MathKeyboard } from '../components/MathKeyboard';
-import { useRef } from 'react'
+import { useRef } from 'react';
 
-type QuizType = 'GCD' | 'PRIME' | 'FACTOR' | 'QUADRATIC';
+type QuizType = 'GCD' | 'PRIME' | 'FACTOR';
 export const BattlePage: React.FC = () => {
   // アクティブな入力欄（どの問題のどの欄か）
   const [activeInput, setActiveInput] = useState<{ index: number; field: 'val1' | 'val2' } | null>(null);
@@ -230,6 +230,7 @@ const handleDelete = () => {
             userInputs,
             currentType,
             timeSeconds: seconds,
+            level,
         },
     })
   };

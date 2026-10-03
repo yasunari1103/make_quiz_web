@@ -163,7 +163,7 @@ export function makeQuizPrimeFactorization(num: number, level: number) {
   let quizCount = 0;
 
   while (quizCount < num) {
-    let n = Math.floor(Math.random() * levelList[level - 1] * 75) + 2;
+    let n = Math.floor(Math.random() * levelList[level - 1] * 50) + 2;
     const factors = primeFactorize(n);
 
     if (

@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import { MakeQuizPage } from './pages/MakeQuizPage';
 import { BattlePage } from './pages/BattlePage';
 import { ResultPage } from './pages/ResultPage';
+import { RankingPage } from "./pages/RankingPage"
 
 // ホーム画面（ナビゲーション）
 const HomePage: React.FC = () => (
@@ -30,6 +31,7 @@ export const App: React.FC = () => {
         <Route path="/make-quiz" element={<MakeQuizPage />} />
         <Route path="/battle" element={<BattlePage />} />
         <Route path="/result" element={<ResultPage />} />
+        <Route path="/ranking" element={<RankingPage />} />
       </Routes>
     </BrowserRouter>
   );
