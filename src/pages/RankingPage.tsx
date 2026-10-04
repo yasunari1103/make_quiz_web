@@ -33,7 +33,7 @@ export const RankingPage = () => {
     const fetchRankings = async () => {
       setLoading(true);
       const { data, error } = await supabase
-        .from("ranking")
+        .from("ranking-time")
         .select("*")
         .eq('number', selectedNumber)
         .eq('level', Number(selectedLevel))
@@ -65,7 +65,7 @@ export const RankingPage = () => {
     };
 
     const { error } = await supabase
-      .from('ranking')
+      .from('ranking-time')
       .insert([newEntry]);
 
     if (error) {
@@ -78,7 +78,7 @@ export const RankingPage = () => {
       
       // 再取得して画面を更新
       const { data } = await supabase
-        .from('ranking')
+        .from('ranking-time')
         .select('*')
         .eq('number', selectedNumber)
         .eq('level', Number(selectedLevel))
