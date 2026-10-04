@@ -286,8 +286,8 @@ const handleDelete = () => {
       <div>
   {/* 問題数選択 */}
   <div>
-    <p style={{ display: 'flex', flexWrap: 'wrap', width: "50vw", alignItems: 'center' }}>問題数 (10~50)</p>
-    <div style={{ display: 'flex', flexWrap: 'wrap', width: "50vw", alignItems: 'center' }}>
+    <p style={{ display: 'flex', flexWrap: 'wrap', width: "40vw", alignItems: 'center' }}>問題数 (10~50)</p>
+    <div style={{ display: 'flex', flexWrap: 'wrap', width: "40vw", alignItems: 'center' }}>
       {[10, 20, 30, 40, 50].map((num) => (
         <label key={`num-${num}`} style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
           <input
@@ -308,8 +308,8 @@ const handleDelete = () => {
 
   {/* 難易度選択 */}
   <div>
-    <p style={{ display: 'flex', flexWrap: 'wrap', width: "50vw", alignItems: 'center' }}>難易度 (1~5)</p>
-    <div style={{ display: 'flex', flexWrap: 'wrap', width: "50vw", alignItems: 'center' }}>
+    <p style={{ display: 'flex', flexWrap: 'wrap', width: "40vw", alignItems: 'center' }}>難易度 (1~5)</p>
+    <div style={{ display: 'flex', flexWrap: 'wrap', width: "40vw", alignItems: 'center' }}>
       {[1, 2, 3, 4, 5].map((lvl) => (
         <label key={`lvl-${lvl}`} style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
           <input
