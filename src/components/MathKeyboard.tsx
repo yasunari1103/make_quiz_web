@@ -98,7 +98,7 @@ export const MathKeyboard: React.FC<MathKeyboardProps> = ({
       {isOpen && (
         <>
           {keys.map((row, rowIndex) => (
-            <div key={rowIndex} style={{ display: 'flex', gap: '6px', justifyContent: 'center' }}>
+            <div key={rowIndex} style={{ display: 'flex', gap: '6px', justifyContent: 'center', margin: '0px' }}>
               {row.map((key) => {
                 let action = () => onInsert(key);
                 let bgColor = '#ffffff';
