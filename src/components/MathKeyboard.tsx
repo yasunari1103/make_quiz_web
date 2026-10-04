@@ -69,14 +69,14 @@ export const MathKeyboard: React.FC<MathKeyboardProps> = ({
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          padding: '4px 12px',
+          padding: '0px 0px',
           backgroundColor: '#d1d5db',
           borderRadius: '6px',
           cursor: 'pointer',
           userSelect: 'none',
         }}
       >
-        <span style={{ fontSize: '13px', fontWeight: 'bold', color: '#374151' }}>
+        <span style={{ fontSize: '10px', fontWeight: 'bold', color: '#374151', margin: "0px" }}>
           ⌨️ 数学用キーボード
         </span>
         <button
@@ -84,7 +84,7 @@ export const MathKeyboard: React.FC<MathKeyboardProps> = ({
           style={{
             background: 'none',
             border: 'none',
-            fontSize: '13px',
+            fontSize: '10px',
             fontWeight: 'bold',
             color: '#1d4ed8',
             cursor: 'pointer',
@@ -124,10 +124,11 @@ export const MathKeyboard: React.FC<MathKeyboardProps> = ({
                     }}
                     style={{
                       flex: 1,
-                      height: '44px',
-                      fontSize: '18px',
+                      height: '35px',
+                      fontSize: '15px',
                       fontWeight: 'bold',
                       borderRadius: '8px',
+                      margin: '0px',
                       border: '1px solid #cbd5e1',
                       backgroundColor: bgColor,
                       color: textColor,
