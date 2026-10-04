@@ -26,6 +26,7 @@ export const RankingPage = () => {
   // ランキング一覧（型を RankingEntry[] に指定）
   const [rankings, setRankings] = useState<RankingEntry[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [isRegistered, setIsRegistered] = useState<boolean>(false); // 登録ボタンの押下判定
 
   // データ取得（ローカルストレージになければモックデータを初期セット）
   useEffect(() => {
@@ -72,6 +73,7 @@ export const RankingPage = () => {
       alert('登録に失敗しました');
     } else {
       alert('ランキングに登録しました！');
+      setIsRegistered(true);
       setPlayerName('');
       
       // 再取得して画面を更新
@@ -108,7 +110,12 @@ export const RankingPage = () => {
             onChange={(e) => setPlayerName(e.target.value)}
             style={{ padding: '8px', marginRight: '10px' }}
           />
-          <button onClick={handleRegister}>登録する</button>
+          <button
+            onClick={handleRegister}
+            disabled={isRegistered} // 💡 isRegistered が true のときに無効化！
+          >
+            {isRegistered ? '登録済み' : '登録する'}
+          </button>
         </div>
       )}
 

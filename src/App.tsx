@@ -12,10 +12,13 @@ const HomePage: React.FC = () => (
     <h1>数学速度対戦アプリ</h1>
     <div style={{ display: 'flex', gap: '20px', justifyContent: 'center', marginTop: '30px' }}>
       <Link to="/battle" style={{ padding: '15px 30px', fontSize: '18px', background: '#007bff', color: '#fff', borderRadius: '8px', textDecoration: 'none' }}>
-        ⚡ 速度対戦モードへ
+        速度対戦モードへ
       </Link>
       <Link to="/make-quiz" style={{ padding: '15px 30px', fontSize: '18px', background: '#28a745', color: '#fff', borderRadius: '8px', textDecoration: 'none' }}>
-        📄 PDF問題作成へ
+        PDF問題作成へ
+      </Link>
+      <Link to="/ranking" style={{ padding: '15px 30px', fontSize: '18px', background: '#ffc107', color: '#212529', borderRadius: '8px', textDecoration: 'none' }}>
+        ランキングへ
       </Link>
     </div>
   </div>
