@@ -1,6 +1,5 @@
-// src/types/ranking.ts
-
 export type ModeType = 'PRIME' | 'FACTOR' | 'GCD';
+export type PeriodType = 'ALL' | 'MONTH' | 'WEEK' | 'TODAY';
 
 export interface RankingEntry {
   id: string;
@@ -9,5 +8,6 @@ export interface RankingEntry {
   number: number;
   level: number;
   currentType: ModeType;
-  created_at: string; // Supabase側のカラム名に合わせる
+  created_at: string;
+  score?: number; // タイムアタック用（オプション）
 }

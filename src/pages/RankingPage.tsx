@@ -1,57 +1,93 @@
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { supabase } from "../lib/supabase";
+import { supabase } from '../lib/supabase';
+import type { RankingEntry, PeriodType, ModeType } from '../types/ranking';
 
-// 💡 type キーワードを追加して ts(1484) エラーを解消
-import type { RankingEntry, ModeType } from '../types/ranking';
+// --- 日時計算用ヘルパー関数 ---
+const getPeriodStartDate = (period: PeriodType): string | null => {
+  const now = new Date();
+
+  if (period === 'TODAY') {
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+    return today.toISOString();
+  }
+
+  if (period === 'WEEK') {
+    // 月曜日を週の始まりとする計算
+    const day = now.getDay();
+    const diff = now.getDate() - day + (day === 0 ? -6 : 1);
+    const monday = new Date(now.setDate(diff));
+    monday.setHours(0, 0, 0, 0);
+    return monday.toISOString();
+  }
+
+  if (period === 'MONTH') {
+    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+    return firstDay.toISOString();
+  }
+
+  return null; // 'ALL' の場合は null
+};
 
 export const RankingPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // BattlePageから送られてきたデータ（100%正解時）
   const state = location.state as {
     timeSeconds?: number;
     correctCount?: number;
     level?: string;
-    currentType: ModeType;
+    currentType?: ModeType;
   } | null;
 
-  // 選択中の問題数と難易度（初期値はBattlePageからの引き継ぎ、なければデフォルト）
+  // フィルター状態
   const [selectedNumber, setSelectedNumber] = useState<number>(state?.correctCount || 10);
   const [selectedLevel, setSelectedLevel] = useState<string>(state?.level || '1');
   const [selectedType, setSelectedType] = useState<ModeType>(state?.currentType || 'PRIME');
+  const [selectedPeriod, setSelectedPeriod] = useState<PeriodType>('ALL');
+
+  // 登録用状態
   const [playerName, setPlayerName] = useState<string>('');
-  
-  // ランキング一覧（型を RankingEntry[] に指定）
+  const [isRegistered, setIsRegistered] = useState<boolean>(false);
+
+  // ランキングデータ状態
   const [rankings, setRankings] = useState<RankingEntry[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [isRegistered, setIsRegistered] = useState<boolean>(false); // 登録ボタンの押下判定
 
-  // データ取得（ローカルストレージになければモックデータを初期セット）
+  // 💡 データ取得処理（フィルター変更時に自動実行）
   useEffect(() => {
     const fetchRankings = async () => {
       setLoading(true);
-      const { data, error } = await supabase
-        .from("ranking-time")
-        .select("*")
+
+      let query = supabase
+        .from('ranking-time')
+        .select('*')
         .eq('number', selectedNumber)
         .eq('level', Number(selectedLevel))
         .eq('currentType', selectedType)
-        .order('timeSeconds', { ascending: true }) // タイムの早い順（昇順）
+        .order('timeSeconds', { ascending: true })
+        .limit(100);
 
-        if (error) {
-          console.error("データ取得エラー",error);
-        } else {
-          setRankings(data || []);
-        }
-        setLoading(false);
-      };
+      // 期間フィルターの適用
+      const startDate = getPeriodStartDate(selectedPeriod);
+      if (startDate) {
+        query = query.gte('created_at', startDate);
+      }
 
-      fetchRankings();
-  }, [selectedNumber, selectedLevel, selectedType]);
+      const { data, error } = await query;
 
-  // 💡 Supabase への新規登録処理
+      if (error) {
+        console.error('データ取得エラー:', error);
+      } else {
+        setRankings(data || []);
+      }
+      setLoading(false);
+    };
+
+    fetchRankings();
+  }, [selectedNumber, selectedLevel, selectedType, selectedPeriod]);
+
+  // 新規登録処理
   const handleRegister = async () => {
     if (!playerName.trim() || !state?.timeSeconds) return;
 
@@ -61,12 +97,9 @@ export const RankingPage = () => {
       number: selectedNumber,
       level: Number(selectedLevel),
       currentType: state?.currentType || selectedType,
-      // createdAt は Supabase 側の default (now()) で自動設定される場合は省略可
     };
 
-    const { error } = await supabase
-      .from('ranking-time')
-      .insert([newEntry]);
+    const { error } = await supabase.from('ranking-time').insert([newEntry]);
 
     if (error) {
       console.error('登録エラー:', error);
@@ -75,15 +108,22 @@ export const RankingPage = () => {
       alert('ランキングに登録しました！');
       setIsRegistered(true);
       setPlayerName('');
-      
-      // 再取得して画面を更新
-      const { data } = await supabase
+
+      // 再取得
+      const startDate = getPeriodStartDate(selectedPeriod);
+      let query = supabase
         .from('ranking-time')
         .select('*')
         .eq('number', selectedNumber)
         .eq('level', Number(selectedLevel))
         .eq('currentType', selectedType)
         .order('timeSeconds', { ascending: true });
+
+      if (startDate) {
+        query = query.gte('created_at', startDate);
+      }
+
+      const { data } = await query;
       if (data) setRankings(data);
     }
   };
@@ -94,74 +134,114 @@ export const RankingPage = () => {
     return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
   };
 
+  // 期間タブの定義
+  const periodTabs: { label: string; value: PeriodType }[] = [
+    { label: '全期間', value: 'ALL' },
+    { label: '月間', value: 'MONTH' },
+    { label: '週間', value: 'WEEK' },
+    { label: '今日', value: 'TODAY' },
+  ];
+
   return (
-    <div style={{ padding: '20px', maxWidth: '600px', margin: '0 auto' }}>
+    <div style={{ padding: '20px', maxWidth: '650px', margin: '0 auto' }}>
       <h1>🏆 ランキング</h1>
 
-      {/* 100%達成直後の場合の登録フォーム */}
+      {/* 記録登録フォーム */}
       {state?.timeSeconds && (
         <div style={{ background: '#1e293b', padding: '15px', borderRadius: '8px', marginBottom: '20px' }}>
-          <h3>🎉 記録登録 ({selectedNumber}問 / 難易度{selectedLevel})</h3>
-          <p>タイム: {state.timeSeconds} 秒</p>
+          <h3>🎉 記録登録 ({selectedNumber}問 / Lv.{selectedLevel} / mode: {state.currentType || selectedType})</h3>
+          <p>タイム: {formatTime(state.timeSeconds)}</p>
           <input
             type="text"
             placeholder="名前を入力"
             value={playerName}
             onChange={(e) => setPlayerName(e.target.value)}
             style={{ padding: '8px', marginRight: '10px' }}
+            disabled={isRegistered}
           />
-          <button
-            onClick={handleRegister}
-            disabled={isRegistered} // 💡 isRegistered が true のときに無効化！
-          >
+          <button onClick={handleRegister} disabled={isRegistered || !playerName.trim()}>
             {isRegistered ? '登録済み' : '登録する'}
           </button>
         </div>
       )}
 
-      {/* 25通りの部門切り替え */}
-      <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
-        <div style={{ display: 'flex', flexWrap: 'wrap', width: "20vw", alignItems: 'center' }}>
-          <label style={{ display: 'flex', flexWrap: 'wrap', width: "20vw", alignItems: 'center' }}>問題数: </label>
+      {/* 条件切り替え（問題数・難易度・モード） */}
+      <div style={{ display: 'flex', gap: '10px', marginBottom: '15px', flexWrap: 'wrap' }}>
+        <div>
+          <label>問題数: </label>
           <select value={selectedNumber} onChange={(e) => setSelectedNumber(Number(e.target.value))}>
             {[10, 20, 30, 40, 50].map((num) => (
               <option key={num} value={num}>{num}問</option>
             ))}
           </select>
         </div>
-        <div style={{ display: 'flex', flexWrap: 'wrap', width: "20vw", alignItems: 'center' }}>
-          <label style={{ display: 'flex', flexWrap: 'wrap', width: "20vw", alignItems: 'center' }}>難易度: </label>
+
+        <div>
+          <label>難易度: </label>
           <select value={selectedLevel} onChange={(e) => setSelectedLevel(e.target.value)}>
             {['1', '2', '3', '4', '5'].map((lvl) => (
               <option key={lvl} value={lvl}>Lv.{lvl}</option>
             ))}
           </select>
         </div>
-        <div style={{ display: 'flex', flexWrap: 'wrap', width: "20vw", alignItems: 'center' }}>
-          <label style={{ display: 'flex', flexWrap: 'wrap', width: "20vw", alignItems: 'center' }}>mode: </label>
+
+        <div>
+          <label>mode: </label>
           <select value={selectedType} onChange={(e) => setSelectedType(e.target.value as ModeType)}>
-            {["PRIME","FACTOR","GCD"].map((type) => (
+            {['PRIME', 'FACTOR', 'GCD'].map((type) => (
               <option key={type} value={type}>{type}</option>
             ))}
           </select>
         </div>
       </div>
 
-{/* ランキング一覧表示 */}
-      <h2>{selectedNumber}問 / 難易度{selectedLevel} / mode: {selectedType} のランキング</h2>
-      
+      {/* 💡 期間選択タブ UI */}
+      <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', borderBottom: '2px solid #334155', paddingBottom: '8px' }}>
+        {periodTabs.map((tab) => (
+          <button
+            key={tab.value}
+            onClick={() => setSelectedPeriod(tab.value)}
+            style={{
+              padding: '6px 14px',
+              borderRadius: '6px',
+              border: 'none',
+              cursor: 'pointer',
+              fontWeight: selectedPeriod === tab.value ? 'bold' : 'normal',
+              background: selectedPeriod === tab.value ? '#3b82f6' : '#1e293b',
+              color: selectedPeriod === tab.value ? '#ffffff' : '#94a3b8',
+            }}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* ランキング表示部分 */}
+      <h2>
+        {periodTabs.find((t) => t.value === selectedPeriod)?.label}ランキング ({selectedNumber}問 / Lv.{selectedLevel} / {selectedType})
+      </h2>
+
       {loading ? (
         <p>読み込み中...</p>
       ) : (
-        <ol>
-          {rankings.map((entry) => (
-            <li key={entry.id}>
-              <strong>{entry.name}</strong> - {formatTime(entry.timeSeconds)} ({new Date(entry.created_at).toLocaleString('ja-JP', { dateStyle: 'short', timeStyle: 'short' })})
+        <ol style={{ paddingLeft: '20px' }}>
+          {rankings.map((entry, index) => (
+            <li key={entry.id} style={{ margin: '8px 0' }}>
+              {index === 0 && '🥇 '}
+              {index === 1 && '🥈 '}
+              {index === 2 && '🥉 '}
+              <strong>{entry.name}</strong> - {formatTime(entry.timeSeconds)}{' '}
+              <span style={{ fontSize: '12px', color: '#94a3b8', marginLeft: '8px' }}>
+                ({new Date(entry.created_at).toLocaleDateString('ja-JP')})
+              </span>
             </li>
           ))}
         </ol>
       )}
-      {!loading && rankings.length === 0 && <p>まだ記録がありません。</p>}
+
+      {!loading && rankings.length === 0 && (
+        <p style={{ color: '#94a3b8' }}>この期間の記録はまだありません。</p>
+      )}
 
       <button onClick={() => navigate('/')} style={{ marginTop: '20px' }}>
         TOPに戻る
