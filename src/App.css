@@ -96,7 +96,6 @@ input[type="text"]:focus {
 
 /* ボタン群のレイアウト */
 button {
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
   color: #ffffff;
   font-weight: 600;
   border: none;
@@ -110,15 +109,28 @@ button {
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
+.make-quiz-type {
+  background: linear-gradient(135deg, #f63bed 0%, #2563eb 100%);
+}
+
+.battle-format {
+  background: linear-gradient(135deg, #7c3aed 0%, #f43f5e 100%);
+}
+
 button:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 12px -2px rgba(59, 130, 246, 0.4);
   filter: brightness(1.1);
 }
 
-button:active {
+.make-quiz-type:active {
   transform: translateY(0);
   background: #f43f5e;
+}
+
+.battle-format:active {
+  transform: translateY(0);
+  background: #753ff4;
 }
 
 .fixed-btn {

@@ -1,7 +1,9 @@
+/* ResultPage.tsx */
+
 import React from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { FormattedText } from '../components/FormattedText';
-import { checkFactorAnswer } from '../utils/factorUtils';
+import { judgeAnswer, formatUserAnswer } from '../utils/judge';
 
 interface ResultState {
   questions: string[];
@@ -10,56 +12,9 @@ interface ResultState {
   currentType: 'GCD' | 'PRIME' | 'FACTOR';
   timeSeconds: number;
   level: string;
+  format: 'TIME' | 'SCORE';
+  score: number;
 }
-
-// ユーザーの入力文字列（例: "3 * 2^2" や "2*2*3"）を素数の配列 [2, 2, 3] に変換する
-export const parsePrimeFactors = (input: string): number[] => {
-  if (!input || !input.trim()) return [];
-
-  // 表記揺れを統一（全角×や*、スペース除去）
-  const normalized = input
-    .replace(/×/g, '*')
-    .replace(/\s+/g, '');
-
-  // '*' で分割して各項を処理
-  const terms = normalized.split('*');
-  const factors: number[] = [];
-
-  for (const term of terms) {
-    if (!term) continue;
-
-    if (term.includes('^')) {
-      // 累乗形式 (例: "2^3")
-      const [baseStr, expStr] = term.split('^');
-      const base = parseInt(baseStr, 10);
-      const exp = parseInt(expStr, 10);
-
-      if (!isNaN(base) && !isNaN(exp) && exp > 0) {
-        for (let i = 0; i < exp; i++) {
-          factors.push(base);
-        }
-      }
-    } else {
-      // 単体数字 (例: "2")
-      const num = parseInt(term, 10);
-      if (!isNaN(num)) {
-        factors.push(num);
-      }
-    }
-  }
-
-  // 昇順にソートして並び順を統一（例: [3, 2, 2] -> [2, 2, 3]）
-  return factors.sort((a, b) => a - b);
-};
-
-// 数字の配列同士（例: [2, 2, 3] と [2, 2, 3]）が一致するかチェック
-export const checkAnswerFactors = (arr1: number[], arr2: number[]): boolean => {
-  // 長さが違ったら不一致
-  if (arr1.length !== arr2.length) return false;
-
-  // 要素がすべて一致しているか確認（ソートは parsePrimeFactors 側で済んでいる前提）
-  return arr1.every((val, idx) => val === arr2[idx]);
-};
 
 export const ResultPage: React.FC = () => {
   const location = useLocation();
@@ -77,7 +32,7 @@ export const ResultPage: React.FC = () => {
     );
   }
 
-  const { questions, answers, userInputs, currentType, timeSeconds, level } = state;
+  const { questions, answers, userInputs, currentType, timeSeconds, level, format, score } = state;
 
   // 時間のフォーマット (例: 02:05)
   const formatTime = (totalSeconds: number) => {
@@ -86,35 +41,12 @@ export const ResultPage: React.FC = () => {
     return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
   };
 
-  // ユーザーの入力値を文字列にまとめる関数
-  const formatUserAnswer = (input: { val1: string; val2: string }) => {
-    if (currentType !== 'FACTOR') {
-      return input.val1.trim() || '（無回答）';
-    }
-    if (!input.val1 && !input.val2) return '（無回答）';
-    return `(x${input.val1.trim()})(x${input.val2.trim()})`;
-  };
-
   // 正解数のカウント
   let correctCount = 0;
   questions.forEach((_, index) => {
-    if (currentType !== "FACTOR") {
-      const userAnswerStr = formatUserAnswer(userInputs[index]);
-      const userAnswerFactors = parsePrimeFactors(userAnswerStr)
-      const correctAnserFactors = parsePrimeFactors(answers[index]);
-      const isCorrect = checkAnswerFactors(userAnswerFactors, correctAnserFactors);
-
-      if (isCorrect) {
-        correctCount++;
-      }
-    } else if (currentType === 'FACTOR') {
-      // 💡 ユーザー入力 "5, -24" と 正解 "(x+5)(x-24)" から数字だけ抜いて比較
-      const userAnswerStr = formatUserAnswer(userInputs[index]);
-      const isCorrect = checkFactorAnswer(userAnswerStr, answers[index]);
-      if (isCorrect) {
-        correctCount++;
-      }
-}
+    if (judgeAnswer(currentType, userInputs[index], answers[index])) {
+      correctCount++;
+    }
   });
 
   const accuracy = Math.round((correctCount / questions.length) * 100);
@@ -140,6 +72,12 @@ export const ResultPage: React.FC = () => {
           <h3 style={{margin:"0"}}>クリアタイム</h3>
           <p style={{ fontSize: '25px', fontWeight: 'bold', color: '#007bff', margin: 0 }}>{formatTime(timeSeconds)}</p>
         </div>
+        {format === 'SCORE' && (
+          <div style={{border: "1px solid #3b82f6", margin:"0"}}>
+            <h3 style={{margin:"0"}}>スコア</h3>
+            <p style={{ fontSize: '25px', fontWeight: 'bold', color: '#007bff', margin: 0 }}>{score}</p>
+          </div>
+        )}
         <div style={{border: "1px solid #3b82f6", margin:"0"}}>
           <h3 style={{margin:"0"}}>正解数</h3>
           <p style={{ fontSize: '25px', fontWeight: 'bold', color: '#28a745', margin: 0 }}>
@@ -158,18 +96,9 @@ export const ResultPage: React.FC = () => {
       <h2>答え合わせ一覧</h2>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
         {questions.map((question, index) => {
-          let isCorrect = false;
-          const userAnswerStr = formatUserAnswer(userInputs[index]);
+          const isCorrect = judgeAnswer(currentType, userInputs[index], answers[index]);
+          const userAnswerStr = formatUserAnswer(currentType, userInputs[index]);
 
-          if (currentType !== 'FACTOR') {
-            const userAnswerFactors = parsePrimeFactors(userAnswerStr);
-            const correctAnswerFactors = parsePrimeFactors(answers[index]);
-            isCorrect = checkAnswerFactors(userAnswerFactors, correctAnswerFactors);
-          } else if (currentType === 'FACTOR') {
-              // 2. 因数分解モード ((x+5)(x-24) など)
-              // 正解の式から数字だけを取り出してユーザー入力と比較
-              isCorrect = checkFactorAnswer(userAnswerStr, answers[index]);
-          }
           return (
             <div
               key={`result-${index}`}
@@ -226,7 +155,7 @@ export const ResultPage: React.FC = () => {
         >
           もう一度対戦する
         </button>
-        {(accuracy === 100) && (
+        {(accuracy === 100) && (format === 'TIME') && (
           <button 
             onClick={() => navigate("/ranking", {
               state: {

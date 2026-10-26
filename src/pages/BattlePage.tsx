@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   makeQuizGCD,
   makeQuizPrimeFactorization,
@@ -6,78 +7,80 @@ import {
 } from '../utils/quizUtils';
 import '../App.css';
 import { FormattedText } from '../components/FormattedText';
-import { useNavigate } from 'react-router-dom'
 import { MathKeyboard } from '../components/MathKeyboard';
-import { useRef } from 'react';
+import { judgeAnswer } from "../utils/judge";
 
 type QuizType = 'GCD' | 'PRIME' | 'FACTOR';
-export const BattlePage: React.FC = () => {
-  // アクティブな入力欄（どの問題のどの欄か）
-  const [activeInput, setActiveInput] = useState<{ index: number; field: 'val1' | 'val2' } | null>(null);
-  // キーボード自体の開閉状態
-  const [isKeyboardOpen, setIsKeyboardOpen] = useState<boolean>(true);
+type BattleFormat = 'TIME' | 'SCORE';
+type Field = 'val1' | 'val2';
+type Input = { val1: string; val2: string };
+type HistoryItem = { question: string; answer: string; user: Input; misses: number };
+const EMPTY_INPUT: Input = { val1: '', val2: '' };
 
-  // 入力欄の参照（スクロール & 文字挿入用）
+export const BattlePage: React.FC = () => {
+  const navigate = useNavigate();
+
+  // ===== 共通設定 =====
+  const [number, setNumber] = useState<string>('10'); // タイム形式の問題数
+  const [level, setLevel] = useState<string>('1');
+  const [timeLimit, setTimeLimit] = useState<number>(60); // スコア形式の制限時間(秒)
+  const [format, setFormat] = useState<BattleFormat | null>(null);
+  const [currentType, setCurrentType] = useState<QuizType | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string>('');
+
+  // ===== 入力・キーボード =====
+  const [userInputs, setUserInputs] = useState<Input[]>([]);
+  const [activeInput, setActiveInput] = useState<{ index: number; field: Field } | null>(null);
+  const [isKeyboardOpen, setIsKeyboardOpen] = useState<boolean>(true);
+  const [keyboardHeight, setKeyboardHeight] = useState<number>(0);
   const inputRefs = useRef<{ [key: string]: HTMLInputElement | null }>({});
 
-  // 💡 入力欄が選択されたときの処理（画面内に自動スクロール）
-  const handleInputFocus = (index: number, field: 'val1' | 'val2') => {
+  // ===== タイム形式 =====
+  const [questions, setQuestions] = useState<string[]>([]);
+  const [answers, setAnswers] = useState<string[]>([]);
+  const [seconds, setSeconds] = useState<number>(0);
+  const [isTimerRunning, setIsTimerRunning] = useState<boolean>(false);
+
+  // ===== スコア形式 =====
+  const [isPlaying, setIsPlaying] = useState<boolean>(false);
+  const [remaining, setRemaining] = useState<number>(0);
+  const [score, setScore] = useState<number>(0);
+  const [currentIndex, setCurrentIndex] = useState<number>(0);
+  const [currentQuestion, setCurrentQuestion] = useState<string | null>(null);
+  const [currentAnswer, setCurrentAnswer] = useState<string>('');
+  const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [misses, setMisses] = useState<number>(0);
+
+  // ------------------------------------------------------------
+  // 入力まわり
+  // ------------------------------------------------------------
+  const handleInputChange = (index: number, field: Field, value: string) => {
+    setUserInputs((prev) => {
+      const next = [...prev];
+      next[index] = { ...(next[index] ?? EMPTY_INPUT), [field]: value };
+      return next;
+    });
+  };
+
+  const handleInputFocus = (index: number, field: Field) => {
     setActiveInput({ index, field });
     setIsKeyboardOpen(true);
-
-    // キーボードが開いて見えなくならないよう、対象の入力欄を画面中央へ自動スクロール
     const key = `${index}-${field}`;
     setTimeout(() => {
       inputRefs.current[key]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }, 100);
   };
-  // 💡  キーボードの高さを保持するステート
-  const [keyboardHeight, setKeyboardHeight] = useState<number>(0);
-  
-  // 💡  キーボードエレメントを参照するための ref
-  const keyboardRef = useRef<HTMLDivElement>(null);
-  // 💡  キーボードの高さをリアルタイム計測する Effect
-  useEffect(() => {
-    if (!keyboardRef.current) return;
 
-    // 高さを取得して更新する関数
-    const updateHeight = () => {
-      if (keyboardRef.current) {
-        setKeyboardHeight(keyboardRef.current.offsetHeight);
-      }
-    };
-
-    // 初期計測
-    updateHeight();
-
-    // ResizeObserver でキーボードのサイズ変化（開閉アニメーション等）をリアルタイム検知
-    const resizeObserver = new ResizeObserver(() => {
-      updateHeight();
-    });
-
-    resizeObserver.observe(keyboardRef.current);
-
-    return () => {
-      resizeObserver.disconnect();
-    };
-  }, []);
-
-
-// 1. 文字挿入処理
   const handleInsert = (char: string) => {
     if (!activeInput) return;
     const { index, field } = activeInput;
-    const key = `${index}-${field}`;
-    const inputEl = inputRefs.current[key];
+    const inputEl = inputRefs.current[`${index}-${field}`];
     const currentVal = userInputs[index]?.[field] || '';
 
     if (inputEl) {
       const start = inputEl.selectionStart ?? currentVal.length;
       const end = inputEl.selectionEnd ?? currentVal.length;
-
-      const newVal = currentVal.substring(0, start) + char + currentVal.substring(end);
-      handleInputChange(index, field, newVal);
-
+      handleInputChange(index, field, currentVal.substring(0, start) + char + currentVal.substring(end));
       setTimeout(() => {
         inputEl.focus();
         inputEl.setSelectionRange(start + char.length, start + char.length);
@@ -87,106 +90,103 @@ export const BattlePage: React.FC = () => {
     }
   };
 
-// 2. 1文字削除
-const handleDelete = () => {
-  if (!activeInput) return;
-  const { index, field } = activeInput;
-  const key = `${index}-${field}`;
-  const inputEl = inputRefs.current[key];
-  const currentVal = userInputs[index]?.[field] || '';
+  const handleDelete = () => {
+    if (!activeInput) return;
+    const { index, field } = activeInput;
+    const inputEl = inputRefs.current[`${index}-${field}`];
+    const currentVal = userInputs[index]?.[field] || '';
+    if (!currentVal) return;
 
-  if (!currentVal) return; // 空なら何もしない
+    const start = inputEl?.selectionStart ?? currentVal.length;
+    const end = inputEl?.selectionEnd ?? currentVal.length;
 
-  // カーソル位置の取得（フォーカスが外れている場合は末尾扱いにする）
-  const start = inputEl?.selectionStart ?? currentVal.length;
-  const end = inputEl?.selectionEnd ?? currentVal.length;
+    let newVal: string;
+    let newCursorPos: number;
+    if (start !== end) {
+      newVal = currentVal.substring(0, start) + currentVal.substring(end);
+      newCursorPos = start;
+    } else if (start > 0) {
+      newVal = currentVal.substring(0, start - 1) + currentVal.substring(start);
+      newCursorPos = start - 1;
+    } else {
+      return;
+    }
 
-  let newVal = '';
-  let newCursorPos = 0;
+    handleInputChange(index, field, newVal);
+    if (inputEl) {
+      setTimeout(() => {
+        inputEl.focus();
+        inputEl.setSelectionRange(newCursorPos, newCursorPos);
+      }, 0);
+    }
+  };
 
-  if (start !== end) {
-    // 💡 範囲選択されている場合は、選択範囲を削除
-    newVal = currentVal.substring(0, start) + currentVal.substring(end);
-    newCursorPos = start;
-  } else if (start > 0) {
-    // 💡 通常の1文字削除（カーソルの左側の文字を1つ消す）
-    newVal = currentVal.substring(0, start - 1) + currentVal.substring(start);
-    newCursorPos = start - 1;
-  } else {
-    // カーソルが一番先頭(0)にある場合は消せる文字がない
-    return;
-  }
-
-  // 値を更新
-  handleInputChange(index, field, newVal);
-
-  // 💡 カーソル位置を元に戻してフォーカスを再セット
-  if (inputEl) {
-    setTimeout(() => {
-      inputEl.focus();
-      inputEl.setSelectionRange(newCursorPos, newCursorPos);
-    }, 0);
-  }
-};
-  // 3. 全削除
   const handleClear = () => {
     if (!activeInput) return;
     handleInputChange(activeInput.index, activeInput.field, '');
   };
 
-  const navigate = useNavigate();
-  const [number, setNumber] = useState<string>('10');
-  const [level, setLevel] = useState<string>('2');
-  const [questions, setQuestions] = useState<string[]>([]);
-  const [answers, setAnswers] = useState<string[]>([]);
-  const [errorMessage, setErrorMessage] = useState<string>('');
-
-  // 💡 現在のクイズの種類を保持
-  const [currentType, setCurrentType] = useState<QuizType | null>(null);
-
-  // 💡 ユーザーの入力値を管理するState（1問につき最大2個の入力欄に対応）
-  const [userInputs, setUserInputs] = useState<{ val1: string; val2: string }[]>([]);
-
-  // 💡 タイマー関連のState
-  const [seconds, setSeconds] = useState<number>(0);
-  const [isTimerRunning, setIsTimerRunning] = useState<boolean>(false);
-
-// タイマーのカウントアップ処理
+  // ------------------------------------------------------------
+  // タイマー
+  // ------------------------------------------------------------
+  // タイム形式: カウントアップ
   useEffect(() => {
-    let timer: ReturnType<typeof setInterval>; // 👈 ここを修正
-    if (isTimerRunning) {
-      timer = setInterval(() => {
-        setSeconds((prev) => prev + 1)
-      }, 1000);
-    }
-
+    if (!isTimerRunning) return;
+    const timer = setInterval(() => setSeconds((prev) => prev + 1), 1000);
     return () => clearInterval(timer);
   }, [isTimerRunning]);
 
-  // 時間のフォーマット (例: 02:05)
+  // スコア形式: カウントダウン。0になったら自動で終了
+  useEffect(() => {
+    if (format !== 'SCORE' || !isPlaying) return;
+    if (remaining <= 0) {
+      finishScore();
+      return;
+    }
+    const t = setTimeout(() => setRemaining((r) => r - 1), 1000);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [format, isPlaying, remaining]);
+
+  // キーボードの高さ計測（MathKeyboard 側の onHeightChange で更新される）
   const formatTime = (totalSeconds: number) => {
     const mins = Math.floor(totalSeconds / 60);
     const secs = totalSeconds % 60;
     return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
   };
 
-  // 難易度変更用ハンドラー
-  const handleLevelChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setLevel(e.target.value);
+  // ------------------------------------------------------------
+  // 形式の切り替え（状態を全部リセット）
+  // ------------------------------------------------------------
+  const selectFormat = (f: BattleFormat) => {
+    setFormat(f);
+    setIsTimerRunning(false);
+    setIsPlaying(false);
+    setQuestions([]);
+    setAnswers([]);
+    setUserInputs([]);
+    setCurrentQuestion(null);
+    setCurrentType(null);
+    setScore(0);
+    setCurrentIndex(0);
+    setHistory([]);
+    setSeconds(0);
+    setErrorMessage('');
   };
 
+  // ------------------------------------------------------------
+  // タイム形式
+  // ------------------------------------------------------------
   const handleGenerate = (type: QuizType) => {
     try {
       const num = parseInt(number, 10);
       const lvl = parseInt(level, 10);
-
       if (isNaN(num) || isNaN(lvl)) {
         setErrorMessage('数字を正しく入力してください');
         return;
       }
 
       let result = { questions: [] as string[], answers: [] as string[] };
-
       if (type === 'GCD') result = makeQuizGCD(num, lvl);
       else if (type === 'PRIME') result = makeQuizPrimeFactorization(num, lvl);
       else if (type === 'FACTOR') result = makeQuizFactorization(num, lvl);
@@ -194,12 +194,8 @@ const handleDelete = () => {
       setQuestions(result.questions);
       setAnswers(result.answers);
       setCurrentType(type);
-      
-      // 解答入力欄の初期化
-      setUserInputs(Array(result.questions.length).fill({ val1: '', val2: '' }));
+      setUserInputs(result.questions.map(() => ({ ...EMPTY_INPUT })));
       setErrorMessage('');
-
-      // タイマーリセット＆スタート
       setSeconds(0);
       setIsTimerRunning(true);
     } catch (err: any) {
@@ -210,52 +206,181 @@ const handleDelete = () => {
     }
   };
 
-  // 入力値変更用ハンドラー
-  const handleInputChange = (index: number, field: 'val1' | 'val2', value: string) => {
-    setUserInputs((prev) => {
-      const newInputs = [...prev];
-      newInputs[index] = { ...newInputs[index], [field]: value };
-      return newInputs;
+  const handleFinish = () => {
+    setIsTimerRunning(false);
+    navigate('/result', {
+      state: {
+        mode: 'TIME',
+        questions,
+        answers,
+        userInputs,
+        currentType,
+        timeSeconds: seconds,
+        level,
+        format: 'TIME',
+      },
     });
   };
 
-  // 秒数の停止処理（必要に応じて呼び出し）
-  const handleFinish = () => {
-    setIsTimerRunning(false);
-    
-    navigate('/result', {
-        state: {
-            questions,
-            answers,
-            userInputs,
-            currentType,
-            timeSeconds: seconds,
-            level,
-        },
-    })
+  // ------------------------------------------------------------
+  // スコア形式
+  // ------------------------------------------------------------
+  const nextQuestion = (type: QuizType) => {
+    const lvl = parseInt(level, 10);
+    // ※ handleGenerate と同じ引数順 (問題数, 難易度)
+    const q =
+      type === 'PRIME'
+        ? makeQuizPrimeFactorization(1, lvl)
+        : type === 'FACTOR'
+        ? makeQuizFactorization(1, lvl)
+        : makeQuizGCD(1, lvl);
+
+    setCurrentQuestion(q.questions[0]);
+    setCurrentAnswer(String(q.answers[0]));
+    setUserInputs([{ ...EMPTY_INPUT }]);
+    setActiveInput({ index: 0, field: 'val1' });
   };
 
+  const startScore = (type: QuizType) => {
+    if (isNaN(parseInt(level, 10))) {
+      setErrorMessage('難易度を選んでください');
+      return;
+    }
+    setErrorMessage('');
+    setCurrentType(type);
+    setScore(0);
+    setCurrentIndex(0);
+    setHistory([]);
+    setRemaining(timeLimit);
+    setIsPlaying(true);
+    nextQuestion(type);
+  };
+
+  const handleSubmitAnswer = () => {
+    if (!isPlaying || !currentQuestion || !currentType) return;
+    const user = userInputs[0] ?? EMPTY_INPUT;
+    const correct = judgeAnswer(currentType, user, currentAnswer);
+
+    if (correct) {
+      // 正解 → 記録して次の問題へ
+      setScore((s) => s + Math.abs(parseInt(userInputs[0].val1)) + Math.abs(parseInt(userInputs[0].val2)));
+      setHistory((h) => [...h, { question: currentQuestion, answer: currentAnswer, user, misses }]);
+      setCurrentIndex((i) => i + 1);
+      nextQuestion(currentType); // misses も 0 に戻る
+    } else {
+      // 不正解 → 同じ問題のまま、入力欄だけクリアして再挑戦
+      setMisses((m) => m + 1);
+      setUserInputs([{ ...EMPTY_INPUT }]);
+      setActiveInput({ index: 0, field: 'val1' });
+      setTimeout(() => inputRefs.current['0-val1']?.focus(), 0);
+    }
+  };
+
+  const finishScore = () => {
+    setIsPlaying(false);
+    navigate('/result', {
+      state: {
+        mode: 'SCORE',
+        questions: history.map((h) => h.question),
+        answers: history.map((h) => h.answer),
+        userInputs: history.map((h) => h.user),
+        misses: history.map((h) => h.misses), // 各問の不正解回数
+        currentType,
+        score,
+        timeSeconds: timeLimit,
+        level,
+        format: 'SCORE',
+      },
+    });
+  };
+
+  // ------------------------------------------------------------
+  // 描画ヘルパー
+  // ------------------------------------------------------------
+  const setRef = (index: number, field: Field) => (el: HTMLInputElement | null) => {
+    inputRefs.current[`${index}-${field}`] = el;
+  };
+
+  const renderInputs = (index: number) => {
+    const val = userInputs[index] ?? EMPTY_INPUT;
+
+    if (currentType === 'FACTOR') {
+      return (
+        <>
+          (x
+          <input
+            ref={setRef(index, 'val1')}
+            type="text"
+            inputMode="none"
+            placeholder="解1"
+            value={val.val1}
+            onFocus={() => handleInputFocus(index, 'val1')}
+            onClick={() => handleInputFocus(index, 'val1')}
+            onChange={(e) => handleInputChange(index, 'val1', e.target.value)}
+            style={{ padding: '6px', fontSize: '16px', width: '80px' }}
+          />
+          <span>)(x</span>
+          <input
+            ref={setRef(index, 'val2')}
+            type="text"
+            inputMode="none"
+            placeholder="解2"
+            value={val.val2}
+            onFocus={() => handleInputFocus(index, 'val2')}
+            onClick={() => handleInputFocus(index, 'val2')}
+            onChange={(e) => handleInputChange(index, 'val2', e.target.value)}
+            style={{ padding: '6px', fontSize: '16px', width: '80px' }}
+          />
+          )
+        </>
+      );
+    }
+
+    return (
+      <input
+        ref={setRef(index, 'val1')}
+        type="text"
+        inputMode="none"
+        placeholder={currentType === 'PRIME' ? '例: 2^2*3' : '例: 12'}
+        value={val.val1}
+        onFocus={() => handleInputFocus(index, 'val1')}
+        onClick={() => handleInputFocus(index, 'val1')}
+        onChange={(e) => handleInputChange(index, 'val1', e.target.value)}
+        style={{ padding: '6px', fontSize: '16px', width: '150px' }}
+      />
+    );
+  };
+
+  const badgeStyle: React.CSSProperties = {
+    position: 'fixed',
+    top: '20px',
+    right: '20px',
+    backgroundColor: '#333',
+    color: '#fff',
+    padding: '10px 20px',
+    borderRadius: '8px',
+    fontSize: '24px',
+    fontWeight: 'bold',
+    boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+    zIndex: 1000,
+  };
+
+  const radioRow: React.CSSProperties = { display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center' };
+
+  // ------------------------------------------------------------
+  // 描画
+  // ------------------------------------------------------------
   return (
     <div className="App" style={{ padding: '20px', position: 'relative' }}>
-      {/* ⏱️ 右上固定タイマー */}
-      <div
-        style={{
-          position: 'fixed',
-          top: '20px',
-          right: '20px',
-          backgroundColor: '#333',
-          color: '#fff',
-          padding: '10px 20px',
-          borderRadius: '8px',
-          fontSize: '24px',
-          fontWeight: 'bold',
-          boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-          zIndex: 1000,
-        }}
-      >
-        ⏱️ {formatTime(seconds)}
-      </div>
-      {/* 💡 キーボードを手動で開くボタン（閉じた時や画面右下に常駐） */}
+      {/* 右上固定の表示 */}
+      {format === 'TIME' && <div style={badgeStyle}>経過時間： {formatTime(seconds)}</div>}
+      {format === 'SCORE' && isPlaying && (
+        <div style={badgeStyle}>
+          スコア： {score}　残り： {remaining}秒
+        </div>
+      )}
+
+      {/* キーボード再表示ボタン */}
       {!isKeyboardOpen && (
         <button
           onClick={() => setIsKeyboardOpen(true)}
@@ -280,120 +405,129 @@ const handleDelete = () => {
       )}
 
       <h1>速度対戦！計算問題</h1>
-
       {errorMessage && <p style={{ color: 'red' }}>{errorMessage}</p>}
 
-      <div>
-  {/* 問題数選択 */}
-  <div>
-    <p style={{ display: 'flex', flexWrap: 'wrap', width: "40vw", alignItems: 'center' }}>問題数 (10~50)</p>
-    <div style={{ display: 'flex', flexWrap: 'wrap', width: "40vw", alignItems: 'center' }}>
-      {[10, 20, 30, 40, 50].map((num) => (
-        <label key={`num-${num}`} style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-          <input
-            type="radio"
-            name="number"
-            value={num}
-            checked={number === String(num)}
-            onChange={(e) => setNumber(e.target.value)}
-            style={{ marginRight: '4px' }}
-          />
-          {num}
-        </label>
-      ))}
-    </div>
-  </div>
-
-  <br />
-
-  {/* 難易度選択 */}
-  <div>
-    <p style={{ display: 'flex', flexWrap: 'wrap', width: "40vw", alignItems: 'center' }}>難易度 (1~5)</p>
-    <div style={{ display: 'flex', flexWrap: 'wrap', width: "40vw", alignItems: 'center' }}>
-      {[1, 2, 3, 4, 5].map((lvl) => (
-        <label key={`lvl-${lvl}`} style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-          <input
-            type="radio"
-            name="difficulty"
-            value={lvl}
-            checked={level === String(lvl)}
-            onChange={handleLevelChange}
-            style={{ marginRight: '4px' }}
-          />
-          {lvl}
-        </label>
-      ))}
-    </div>
-  </div>
-</div>
-
-      {/* 問題生成ボタン */}
-      <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginBottom: '20px' }}>
-        <button onClick={() => handleGenerate('GCD')}>最大公約数</button>
-        <button onClick={() => handleGenerate('PRIME')}>素因数分解</button>
-        <button onClick={() => handleGenerate('FACTOR')}>因数分解</button>
+      {/* 形式の選択 */}
+      <div
+        style={{
+          display: 'flex',
+          gap: '10px',
+          justifyContent: 'center',
+          marginBottom: '20px',
+          borderBottom: '2px solid #334155',
+          paddingBottom: '8px',
+        }}
+      >
+        <button className="battle-format" onClick={() => selectFormat('TIME')}>タイム形式</button>
+        <button className="battle-format" onClick={() => selectFormat('SCORE')}>スコア形式</button>
       </div>
 
-      {/* 問題・解答フォーム表示エリア */}
-      {questions.length > 0 && (
+      {/* 設定（形式を選んだら表示。プレイ中のスコア形式は隠す） */}
+      {format !== null && !(format === 'SCORE' && isPlaying) && (
+      <div>
+        <div>
+          {format === 'TIME' ? (
+            <div>
+              <p>問題数</p>
+              <div style={radioRow}>
+                {[10, 20, 30, 40, 50].map((n) => (
+                  <label key={`num-${n}`} style={{ cursor: 'pointer' }}>
+                    <input
+                      type="radio"
+                      name="number"
+                      value={n}
+                      checked={number === String(n)}
+                      onChange={(e) => setNumber(e.target.value)}
+                      style={{ marginRight: '4px' }}
+                    />
+                    {n}
+                  </label>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div>
+              <p>制限時間</p>
+              <div style={radioRow}>
+                {[30, 60, 120, 180].map((t) => (
+                  <label key={`tl-${t}`} style={{ cursor: 'pointer' }}>
+                    <input
+                      type="radio"
+                      name="timeLimit"
+                      checked={timeLimit === t}
+                      onChange={() => setTimeLimit(t)}
+                      style={{ marginRight: '4px' }}
+                    />
+                    {t}秒
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <br />
+
+          <div>
+            <p>難易度 (1~5)</p>
+            <div style={radioRow}>
+              {[1, 2, 3, 4, 5].map((lvl) => (
+                <label key={`lvl-${lvl}`} style={{ cursor: 'pointer' }}>
+                  <input
+                    type="radio"
+                    name="difficulty"
+                    value={lvl}
+                    checked={level === String(lvl)}
+                    onChange={(e) => setLevel(e.target.value)}
+                    style={{ marginRight: '4px' }}
+                  />
+                  {lvl}
+                </label>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div>
+          {/* 出題ジャンル = スタートボタン */}
+          <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', margin: '20px 0' }}>
+            {(
+              [
+                ['GCD', '最大公約数'],
+                ['PRIME', '素因数分解'],
+                ['FACTOR', '因数分解'],
+              ] as [QuizType, string][]
+            ).map(([type, label]) => (
+              <button
+                key={type}
+                className="make-quiz-type"
+                onClick={() => (format === 'SCORE' ? startScore(type) : handleGenerate(type))}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+      )}
+
+      {/* ===== タイム形式: 問題一覧 ===== */}
+      {format === 'TIME' && questions.length > 0 && (
         <div id="battle-output" style={{ marginTop: '20px' }}>
           <section id="outputQuestion">
             <h2>問題一覧</h2>
             {questions.map((question, index) => (
               <div
-                className='question-item'
+                className="question-item"
                 key={`question-${index}`}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '15px',
-                  marginBottom: '12px',
-                  fontSize: '18px',
-                }}
+                style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '12px', fontSize: '18px' }}
               >
-                <div className='question-text'>
-                  <span style={{ flexGrow: 1 }}><FormattedText text={question} /></span>
+                <div className="question-text">
+                  <span style={{ flexGrow: 1 }}>
+                    <FormattedText text={question} />
+                  </span>
                 </div>
-                {/* 💡 問題タイプに応じた入力フォームの分岐 */}
                 <div className="userForm" style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
-                  {currentType !== 'FACTOR' ? (
-                    /* 1. 素因数分解用：単一の入力欄 */
-                    <input
-                      type="text"
-                      inputMode='none'
-                      placeholder="例: 2^2*3, 12, ..."
-                      value={userInputs[index]?.val1 || ''}
-                      onFocus={() => handleInputFocus(index, "val1")}
-                      onClick={() => handleInputFocus(index,"val1")}
-                      onChange={(e) => handleInputChange(index, 'val1', e.target.value)}
-                      style={{ padding: '6px', fontSize: '16px', width: '150px' }}
-                    />
-                  ) : (
-                    /* 2. GCD / 因数分解用：2つの入力欄 */
-                    <>(x
-                      <input
-                        type="text"
-                        inputMode='none'
-                        placeholder="解1"
-                        value={userInputs[index]?.val1 || ''}
-                        onFocus={() => handleInputFocus(index, "val1")}
-                        onClick={() => handleInputFocus(index,"val1")}
-                        onChange={(e) => handleInputChange(index, 'val1', e.target.value)}
-                        style={{ padding: '6px', fontSize: '16px', width: '80px' }}
-                      />
-                      <span>)(x</span>
-                      <input
-                        type="text"
-                        inputMode='none'
-                        placeholder="解2"
-                        value={userInputs[index]?.val2 || ''}
-                        onFocus={() => handleInputFocus(index, "val2")}
-                        onClick={() => handleInputFocus(index,"val2")}
-                        onChange={(e) => handleInputChange(index, 'val2', e.target.value)}
-                        style={{ padding: '6px', fontSize: '16px', width: '80px' }}
-                      />)
-                    </>
-                  )}
+                  {renderInputs(index)}
                 </div>
               </div>
             ))}
@@ -414,21 +548,75 @@ const handleDelete = () => {
               解答を提出して終了
             </button>
           </section>
-          {/* 画面下に常駐する数学用キーボード */}
-          <MathKeyboard
-            isOpen={isKeyboardOpen}
-            onToggle={() => setIsKeyboardOpen((prev) => !prev)}
-            onInsert={handleInsert}
-            onDelete={handleDelete}
-            onClear={handleClear}
-            onHeightChange={setKeyboardHeight}
-          />
         </div>
       )}
-      
 
-    <div style={{ paddingBottom: isKeyboardOpen ? `${keyboardHeight}px` : '0px', position: 'relative' }}></div>
+      {/* ===== スコア形式: 1問ずつ ===== */}
+      {format === 'SCORE' && isPlaying && (
+        <div id="battle-output" style={{ marginTop: '20px' }}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              marginBottom: '10px',
+              fontSize: '18px',
+              fontWeight: 'bold',
+            }}
+          >
+            <span>第 {currentIndex + 1} 問</span>
+          </div>
 
+          <section id="outputQuestion">
+            <h2>問題</h2>
+            <div className="question-text" style={{ fontSize: '20px', marginBottom: '10px' }}>
+              <FormattedText text={currentQuestion || ''} />
+            </div>
+
+            <div
+              className="userForm"
+              style={{ display: 'flex', gap: '5px', alignItems: 'center' }}
+              onKeyDown={(e) => e.key === 'Enter' && handleSubmitAnswer()}
+            >
+              {renderInputs(0)}
+              <button
+                onClick={handleSubmitAnswer}
+                style={{
+                  padding: '8px 16px',
+                  background: '#3b82f6',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                }}
+              >
+                回答
+              </button>
+            </div>
+
+            <button
+              onClick={finishScore}
+              style={{ marginTop: '10px', padding: '6px 16px', cursor: 'pointer' }}
+            >
+              途中で終了
+            </button>
+          </section>
+        </div>
+      )}
+
+      {/* 数学キーボード（問題が表示されている間だけ） */}
+      {((format === 'TIME' && questions.length > 0) || (format === 'SCORE' && isPlaying)) && (
+        <MathKeyboard
+          isOpen={isKeyboardOpen}
+          onToggle={() => setIsKeyboardOpen((prev) => !prev)}
+          onInsert={handleInsert}
+          onDelete={handleDelete}
+          onClear={handleClear}
+          onHeightChange={setKeyboardHeight}
+        />
+      )}
+
+      {/* キーボードに隠れないための余白 */}
+      <div style={{ paddingBottom: isKeyboardOpen ? `${keyboardHeight}px` : '0px' }} />
     </div>
   );
 };
