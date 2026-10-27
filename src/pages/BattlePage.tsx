@@ -419,11 +419,11 @@ export const BattlePage: React.FC = () => {
         }}
       >
         <button className="battle-format" onClick={() => selectFormat('TIME')}>タイム形式</button>
-        <button className="battle-format" onClick={() => selectFormat('SCORE')}>スコア形式</button>
+        <button className="battle-format" onClick={() => selectFormat('SCORE')}>スコア形式(試験運用中)</button>
       </div>
 
       {/* 設定（形式を選んだら表示。プレイ中のスコア形式は隠す） */}
-      {format !== null && !(format === 'SCORE' && isPlaying) && (
+      {format !== null && !(isPlaying || isTimerRunning) && (
       <div>
         <div>
           {format === 'TIME' ? (
