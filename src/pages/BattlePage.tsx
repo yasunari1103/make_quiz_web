@@ -260,10 +260,16 @@ export const BattlePage: React.FC = () => {
     if (!isPlaying || !currentQuestion || !currentType) return;
     const user = userInputs[0] ?? EMPTY_INPUT;
     const correct = judgeAnswer(currentType, user, currentAnswer);
+    const toAbs = (s: string): number =>
+  (s.match(/\d+/g) ?? []).reduce((sum, d) => sum + Number(d), 0);
 
     if (correct) {
       // 正解 → 記録して次の問題へ
+      if (currentType === "FACTOR") {
       setScore((s) => s + Math.abs(parseInt(userInputs[0].val1)) + Math.abs(parseInt(userInputs[0].val2)));
+      } else {
+      setScore((s) => s + toAbs(userInputs[0].val1));
+      }
       setHistory((h) => [...h, { question: currentQuestion, answer: currentAnswer, user, misses }]);
       setCurrentIndex((i) => i + 1);
       nextQuestion(currentType); // misses も 0 に戻る
