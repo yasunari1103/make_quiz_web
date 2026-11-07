@@ -218,6 +218,7 @@ export const BattlePage: React.FC = () => {
         timeSeconds: seconds,
         level,
         format: 'TIME',
+        runId: crypto.randomUUID(),
       },
     });
   };
@@ -266,9 +267,13 @@ export const BattlePage: React.FC = () => {
     if (correct) {
       // 正解 → 記録して次の問題へ
       if (currentType === "FACTOR") {
-      setScore((s) => s + Math.abs(parseInt(userInputs[0].val1)) + Math.abs(parseInt(userInputs[0].val2)));
+        const addScore = Math.abs(parseInt(userInputs[0].val1)) + Math.abs(parseInt(userInputs[0].val2));
+        setScore((s) => s + addScore);
+        setRemaining((r) => r + Math.trunc(addScore/3));
       } else {
-      setScore((s) => s + toAbs(userInputs[0].val1));
+        const addScore = toAbs(userInputs[0].val1);
+        setScore((s) => s + addScore);
+        setRemaining((r) => r + Math.trunc(addScore/3));
       }
       setHistory((h) => [...h, { question: currentQuestion, answer: currentAnswer, user, misses }]);
       setCurrentIndex((i) => i + 1);
@@ -276,6 +281,7 @@ export const BattlePage: React.FC = () => {
     } else {
       // 不正解 → 同じ問題のまま、入力欄だけクリアして再挑戦
       setMisses((m) => m + 1);
+      setRemaining((r) => Math.max(0, r - 3)); // 不正解時に残り時間を3秒減らす
       setUserInputs([{ ...EMPTY_INPUT }]);
       setActiveInput({ index: 0, field: 'val1' });
       setTimeout(() => inputRefs.current['0-val1']?.focus(), 0);
@@ -296,6 +302,7 @@ export const BattlePage: React.FC = () => {
         timeSeconds: timeLimit,
         level,
         format: 'SCORE',
+        runId: crypto.randomUUID(),
       },
     });
   };
@@ -425,7 +432,7 @@ export const BattlePage: React.FC = () => {
         }}
       >
         <button className="battle-format" onClick={() => selectFormat('TIME')}>タイム形式</button>
-        <button className="battle-format" onClick={() => selectFormat('SCORE')}>スコア形式(試験運用中)</button>
+        <button className="battle-format" onClick={() => selectFormat('SCORE')}>スコア形式</button>
       </div>
 
       {/* 設定（形式を選んだら表示。プレイ中のスコア形式は隠す） */}
@@ -455,7 +462,7 @@ export const BattlePage: React.FC = () => {
             <div>
               <p>制限時間</p>
               <div style={radioRow}>
-                {[30, 60, 120, 180].map((t) => (
+                {[60, 120, 180, 300].map((t) => (
                   <label key={`tl-${t}`} style={{ cursor: 'pointer' }}>
                     <input
                       type="radio"

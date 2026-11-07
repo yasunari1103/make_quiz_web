@@ -6,14 +6,17 @@ import { FormattedText } from '../components/FormattedText';
 import { judgeAnswer, formatUserAnswer } from '../utils/judge';
 
 interface ResultState {
+  format?: "TIME" | "SCORE";
+  score?: number;
   questions: string[];
   answers: string[];
   userInputs: { val1: string; val2: string }[];
   currentType: 'GCD' | 'PRIME' | 'FACTOR';
   timeSeconds: number;
   level: string;
-  format: 'TIME' | 'SCORE';
-  score: number;
+  timeLimit?: number;
+  runId?: string;
+  correctCount?: number; // 正解数を保持するためのオプションプロパティ
 }
 
 export const ResultPage: React.FC = () => {
@@ -155,14 +158,31 @@ export const ResultPage: React.FC = () => {
         >
           もう一度対戦する
         </button>
-        {(accuracy === 100) && (format === 'TIME') && (
+        {state.format === 'SCORE' ? (
+          (state.score ?? 0) > 0 && (
+            <button onClick={() => navigate('/ranking', {
+              state: {
+                format: 'SCORE',
+                score: state.score,
+                timeLimit: state.timeLimit,
+                level,
+                currentType, 
+                runId: crypto.randomUUID()  ,
+                },
+              })}>
+              rankingに登録
+            </button>
+          )
+        ) : accuracy === 100 && (
           <button 
             onClick={() => navigate("/ranking", {
               state: {
-                timeSeconds,
-                correctCount,
+                timeSeconds: state.timeSeconds,
+                correctCount: state.correctCount,
                 level,
                 currentType,
+                timeLimit: state.timeLimit,
+                runId: crypto.randomUUID(),
                 },
               }
             )}
