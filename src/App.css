@@ -290,3 +290,133 @@ h2 {
 .fraction .denominator {
   padding-top: 1px;
 }
+
+/* ============================================================
+   スマホ対応用の追加CSS（App.css の末尾に貼るか、別ファイルで import）
+   ※ 既存のインライン style に勝つため、一部 !important を使っています
+   ============================================================ */
+
+/* --- 全体の土台 --- */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%; /* スマホで勝手に文字が拡大されるのを防ぐ */
+}
+
+body {
+  overflow-x: hidden; /* 横スクロールを出さない */
+}
+
+/* 入力欄は16px以上にする（iPhone Safari はそれ未満だとフォーカス時に勝手にズームする） */
+input,
+select,
+button {
+  font-size: 16px;
+}
+
+/* タップしやすいサイズ */
+button {
+  min-height: 44px;
+}
+
+input[type='radio'] {
+  width: 20px;
+  height: 20px;
+}
+
+label {
+  padding: 6px 4px;
+}
+
+/* 長い式がはみ出したとき、その枠の中だけ横スクロール */
+.question-text {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+input[type='text'] {
+  max-width: 100%;
+}
+
+/* --- スマホ幅（〜600px） --- */
+@media (max-width: 600px) {
+  .App {
+    padding: 12px !important;
+  }
+
+  h1 {
+    font-size: 1.4rem;
+  }
+
+  h2 {
+    font-size: 1.15rem;
+  }
+
+  /* 右上固定のタイマー/スコア表示 → 上に張り付く横長バーに（タイトルと重ならない） */
+  .battle-badge {
+    position: sticky !important;
+    top: 0 !important;
+    right: auto !important;
+    width: 100%;
+    margin: 0 0 12px !important;
+    padding: 8px 12px !important;
+    font-size: 16px !important;
+    text-align: center;
+    border-radius: 8px !important;
+  }
+
+  /* 形式ボタン・ジャンルボタンを横いっぱいに均等割り */
+  .battle-format,
+  .make-quiz-type {
+    flex: 1;
+    padding: 10px 6px;
+    font-size: 15px;
+  }
+
+  /* タイム形式の問題一覧: 問題文を1行目、入力欄を2行目に */
+  .question-item {
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+  }
+
+  .question-item .question-text {
+    flex: 1 1 100%;
+  }
+
+  /* 入力欄は残り幅に合わせて伸縮（固定px指定を上書き） */
+  .userForm {
+    flex-wrap: wrap;
+    width: 100%;
+  }
+
+  .userForm input[type='text'] {
+    flex: 1 1 0;
+    min-width: 70px;
+    width: auto !important;
+  }
+
+  /* 結果画面の「クリアタイム/正解数/正解率」: 折り返して縦に並べられるように */
+  .result-summary {
+    flex-wrap: wrap !important;
+    gap: 10px;
+  }
+
+  .result-summary > div {
+    flex: 1 1 28%;
+    min-width: 90px;
+    text-align: center;
+  }
+
+  .result-summary p {
+    font-size: 20px !important;
+  }
+}
+
+/* iPhone のノッチ/ホームバー対策（キーボード等を下固定している場合に有効） */
+@supports (padding: env(safe-area-inset-bottom)) {
+  body {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
