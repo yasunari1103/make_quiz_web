@@ -437,7 +437,7 @@ export const BattlePage: React.FC = () => {
 
       {/* 設定（形式を選んだら表示。プレイ中のスコア形式は隠す） */}
       {format !== null && !(isPlaying || isTimerRunning) && (
-      <div>
+      <div className="battle-setup">
         <div>
           {format === 'TIME' ? (
             <div>
@@ -500,7 +500,7 @@ export const BattlePage: React.FC = () => {
           </div>
         </div>
 
-        <div>
+        <div className="genre-buttons">
           {/* 出題ジャンル = スタートボタン */}
           <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', margin: '20px 0' }}>
             {(

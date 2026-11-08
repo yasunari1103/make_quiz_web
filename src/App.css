@@ -291,6 +291,29 @@ h2 {
   padding-top: 1px;
 }
 
+/* 設定欄とボタンを縦に積む */
+.battle-setup {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 16px;
+}
+
+/* 3つのジャンルボタンを縦並びに */
+.genre-buttons {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin: 20px 0;
+}
+
+.genre-buttons .make-quiz-type {
+  width: 100%;
+  max-width: 320px;      /* 広い画面で間延びしない */
+  white-space: nowrap;   /* 文字を縦に折り返さない */
+}
+
 /* ============================================================
    スマホ対応用の追加CSS（App.css の末尾に貼るか、別ファイルで import）
    ※ 既存のインライン style に勝つため、一部 !important を使っています
@@ -370,7 +393,6 @@ input[type='text'] {
   /* 形式ボタン・ジャンルボタンを横いっぱいに均等割り */
   .battle-format,
   .make-quiz-type {
-    flex: 1;
     padding: 10px 6px;
     font-size: 15px;
   }
